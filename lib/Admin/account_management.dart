@@ -12,6 +12,7 @@ class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _UserManagementScreenState createState() => _UserManagementScreenState();
 }
 
@@ -25,7 +26,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   // Function to handle adding or editing users
   void _showUserForm({User? user}) {
     final isEditing = user != null;
-    final nameController = TextEditingController(text: isEditing ? user!.name : '');
+    final nameController = TextEditingController(text: isEditing ? user.name : '');
     final emailController = TextEditingController(text: isEditing ? user.email : '');
     final roleController = TextEditingController(text: isEditing ? user.role : '');
 
@@ -53,7 +54,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               onPressed: () {
                 setState(() {
                   if (isEditing) {
-                    user!.name = nameController.text;
+                    user.name = nameController.text;
                     user.email = emailController.text;
                     user.role = roleController.text;
                   } else {

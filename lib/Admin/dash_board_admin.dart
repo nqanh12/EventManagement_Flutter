@@ -47,7 +47,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         // Navigate to User Management Page
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => UserManagementScreen()),
+                          MaterialPageRoute(builder: (context) =>const UserManagementScreen()),
                         );
                       },
                     ),
@@ -58,7 +58,7 @@ class AdminDashboardScreen extends StatelessWidget {
                         // Navigate to Event Management Page
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => EventManagementScreen()),
+                          MaterialPageRoute(builder: (context) =>const EventManagementScreen()),
                         );
                       },
                     ),

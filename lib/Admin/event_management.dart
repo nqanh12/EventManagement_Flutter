@@ -12,6 +12,7 @@ class EventManagementScreen extends StatefulWidget {
   const EventManagementScreen({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _EventManagementScreenState createState() => _EventManagementScreenState();
 }
 
@@ -24,9 +25,9 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
 
   void _showEventForm({Event? event}) {
     final isEditing = event != null;
-    final nameController = TextEditingController(text: isEditing ? event!.name : '');
+    final nameController = TextEditingController(text: isEditing ? event.name : '');
     final locationController = TextEditingController(text: isEditing ? event.location : '');
-    DateTime selectedDateTime = isEditing ? event!.dateTime : DateTime.now();
+    DateTime selectedDateTime = isEditing ? event.dateTime : DateTime.now();
 
     showDialog(
       context: context,
@@ -48,6 +49,7 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
                   );
                   if (pickedDate != null) {
                     final pickedTime = await showTimePicker(
+                      // ignore: use_build_context_synchronously
                       context: context,
                       initialTime: TimeOfDay.fromDateTime(selectedDateTime),
                     );
@@ -91,7 +93,7 @@ class _EventManagementScreenState extends State<EventManagementScreen> {
               onPressed: () {
                 setState(() {
                   if (isEditing) {
-                    event!.name = nameController.text;
+                    event.name = nameController.text;
                     event.dateTime = selectedDateTime;
                     event.location = locationController.text;
                   } else {
