@@ -1,145 +1,105 @@
 import 'package:doan/Admin/account_management.dart';
+import 'package:doan/Admin/event_list_management.dart';
 import 'package:doan/Admin/event_management.dart';
 import 'package:flutter/material.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
+
+  @override
+  AdminDashboardScreenState createState() => AdminDashboardScreenState();
+}
+
+class AdminDashboardScreenState extends State<AdminDashboardScreen> {
+  int _selectedIndex = 0; // Track the selected tab
+
+  // Different screens corresponding to each tab in the bottom navigation bar
+  static final List<Widget> _widgetOptions = <Widget>[
+    const UserManagementScreen(), // Manage Users
+    const EventManagementScreen(), // Manage Events
+    EventListManagementScreen(), // Manage Participants
+    const StatisticsScreen(), // View Statistics
+    const ExportReportScreen(), // Export Report
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Trang Quản Trị",
+          "Quản Trị",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
-        elevation: 0,
       ),
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Color.fromARGB(255, 197, 216, 236),
-              Color.fromARGB(255, 25, 117, 215),
-            ],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
+      body: _widgetOptions[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Người dùng',
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              const SizedBox(height: 100),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2, // 2 items per row
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  children: [
-                    _buildDashboardCard(
-                      icon: Icons.person,
-                      label: "Quản Lý Người Dùng",
-                      onTap: () {
-                        // Navigate to User Management Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) =>const UserManagementScreen()),
-                        );
-                      },
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.event,
-                      label: "Quản Lý Sự Kiện",
-                      onTap: () {
-                        // Navigate to Event Management Page
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) =>const EventManagementScreen()),
-                        );
-                      },
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.people,
-                      label: "Danh Sách Người Tham Gia",
-                      onTap: () {
-                        // Navigate to Participant List Page
-                        Navigator.pushNamed(context, '/participant-list');
-                      },
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.bar_chart,
-                      label: "Thống Kê",
-                      onTap: () {
-                        // Navigate to Statistics Page
-                        Navigator.pushNamed(context, '/statistics');
-                      },
-                    ),
-                    _buildDashboardCard(
-                      icon: Icons.report,
-                      label: "Xuất Báo Cáo",
-                      onTap: () {
-                        // Navigate to Report Export Page
-                        Navigator.pushNamed(context, '/export-report');
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          BottomNavigationBarItem(
+            icon: Icon(Icons.event),
+            label: 'Sự kiện',
           ),
-        ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people),
+            label: 'Danh Sách',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.bar_chart),
+            label: 'Thống Kê',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.report),
+            label: 'Xuất Báo Cáo',
+          ),
+        ],
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.blue[800],
+        unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
+        type: BottomNavigationBarType.fixed, // Ensures the bar does not shift
+        backgroundColor: Colors.white,
       ),
     );
   }
+}
 
-  Widget _buildDashboardCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        elevation: 8,
-        shadowColor: Colors.black.withOpacity(0.3),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.8),
-                Colors.blueAccent.withOpacity(0.3),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: Colors.blue[900]),
-              const SizedBox(height: 20),
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+// Example ParticipantListScreen, StatisticsScreen, ExportReportScreen
+// You can replace these with your actual widget implementations
+
+class ParticipantListScreen extends StatelessWidget {
+  const ParticipantListScreen({super.key, required eventId});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Participant List'));
+  }
+}
+
+class StatisticsScreen extends StatelessWidget {
+  const StatisticsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Statistics Screen'));
+  }
+}
+
+class ExportReportScreen extends StatelessWidget {
+  const ExportReportScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Export Report Screen'));
   }
 }

@@ -1,3 +1,4 @@
+import 'package:permission_handler/permission_handler.dart';
 import 'package:doan/User/student_list_event.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
@@ -14,6 +15,20 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
   QRViewController? controller;
   String? studentInfo;
   String? checkStatus;
+  bool isCheckIn = true; // State to manage Check-In/Check-Out mode
+
+  @override
+  void initState() {
+    super.initState();
+    requestCameraPermission(); // Yêu cầu quyền camera
+  }
+
+  Future<void> requestCameraPermission() async {
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      await Permission.camera.request();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +41,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
       ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: <Widget>[
           // Gradient background
@@ -47,11 +63,11 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  margin: const EdgeInsets.all(16.0),
-                  padding: const EdgeInsets.all(8.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 70),
+                  padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(10),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
@@ -60,9 +76,13 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
                       ),
                     ],
                   ),
-                  child: QRView(
-                    key: qrKey,
-                    onQRViewCreated: _onQRViewCreated,
+                  // Make the QR Scanner square-shaped
+                  child: AspectRatio(
+                    aspectRatio: 1, // Ensures a square scanner
+                    child: QRView(
+                      key: qrKey,
+                      onQRViewCreated: _onQRViewCreated,
+                    ),
                   ),
                 ),
               ),
@@ -72,7 +92,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16.0),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withOpacity(0),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(30),
                     ),
@@ -129,6 +149,36 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               ),
             ],
           ),
+          // Refined Check-In / Check-Out switch at the top-right corner
+          Positioned(
+            bottom: 315,
+            right: 180,
+            left  : 180,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Switch(
+                value: isCheckIn,
+                onChanged: (value) {
+                  setState(() {
+                    isCheckIn = value;
+                  });
+                },
+                activeColor: Colors.green,
+                inactiveThumbColor: Colors.red,
+              ),
+            ),
+          ),
           Positioned(
             left: 20,
             bottom: 20,
@@ -136,7 +186,8 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => EventParticipantsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => EventParticipantsScreen()),
                 );
               },
               icon: const Icon(Icons.list),
@@ -144,7 +195,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 foregroundColor: const Color.fromARGB(255, 0, 92, 250),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -164,7 +215,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                 foregroundColor: const Color.fromARGB(255, 0, 92, 250),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -183,7 +234,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
       setState(() {
         // Dữ liệu giả định từ mã QR sau khi quét
         studentInfo = 'MSSV: 123456, Tên: Nguyễn Văn A';
-        checkStatus = 'Checked In'; // Thay đổi theo dữ liệu thực tế
+        checkStatus = isCheckIn ? 'Checked In' : 'Checked Out'; // Update based on switch value
       });
     });
   }

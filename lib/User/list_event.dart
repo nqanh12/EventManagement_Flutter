@@ -162,11 +162,13 @@ class EventListScreenState extends State<ListEvent> {
         ],
       ),
       child: DropdownButton<String>(
+        borderRadius: BorderRadius.circular(20),
         value: _filter,
         onChanged: _onFilterChanged,
         items: <String>['Tất cả', 'Sắp tới', 'Đã qua', 'Hôm nay']
             .map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
+
             value: value,
             child: Text(value),
           );

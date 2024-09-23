@@ -1,10 +1,10 @@
 // import 'package:doan/User/scannerqr.dart';
 // import 'package:doan/Home/login.dart';
-// import 'package:doan/Admin/event_management.dart';
-import 'package:doan/Home/home.dart';
+// import 'package:doan/Admin/event_list_management.dart';
+// import 'package:doan/Home/home.dart';
 // import 'package:doan/User/qrcode.dart';
 // import 'package:doan/Admin/account_management.dart';
-// import 'package:doan/Admin/dash_board_admin.dart';
+import 'package:doan/Admin/dash_board_admin.dart';
 // import 'package:doan/Home/signup.dart';
 // import 'package:doan/Event/list_event.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home:const Home(),
+      home:const AdminDashboardScreen(),
     );
   }
 }

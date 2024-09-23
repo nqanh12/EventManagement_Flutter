@@ -7,9 +7,9 @@ class ChangePasswordScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(75.0),
+        preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
-        title: const Text("Đổi mật khẩu" ,style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold)),
+        title: const Text("Đổi mật khẩu" ,style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
         elevation: 0,

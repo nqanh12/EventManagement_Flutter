@@ -7,9 +7,9 @@ class LanguageSettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Cài đặt ngôn ngữ"),
+        title: const Text("Cài đặt ngôn ngữ", style: TextStyle(color: Colors.black, fontSize: 24,fontWeight: FontWeight.bold)),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: const Color.fromARGB(255, 25, 117, 215),
         elevation: 0,
       ),
       extendBodyBehindAppBar: true,
@@ -32,7 +32,7 @@ class LanguageSettingsScreen extends StatelessWidget {
               const SizedBox(height: 80),
               const SizedBox(height: 20),
               ListTile(
-                title: const Text("Tiếng Việt", style: TextStyle(color: Colors.black)),
+                title: const Text("Tiếng Việt", style: TextStyle(fontSize: 20,color: Colors.black)),
                 trailing: Radio(
                   value: true,
                   groupValue: true,
@@ -42,7 +42,7 @@ class LanguageSettingsScreen extends StatelessWidget {
                 ),
               ),
               ListTile(
-                title: const Text("English", style: TextStyle(color: Colors.black)),
+                title: const Text("English", style: TextStyle(fontSize: 20,color: Colors.black)),
                 trailing: Radio(
                   value: false,
                   groupValue: true,
