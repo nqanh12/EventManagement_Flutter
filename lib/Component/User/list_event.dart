@@ -1,18 +1,19 @@
-import 'package:doan/Home/home.dart';
-import 'package:doan/User/scannerqr.dart';
+import 'package:doan/Component/User/detail_event.dart';
+import 'package:doan/Component/Home/home.dart';
 import 'package:flutter/material.dart';
 
-class ListEventCheck extends StatefulWidget {
-  const ListEventCheck({super.key});
+class ListEvent extends StatefulWidget {
+  const ListEvent({super.key});
 
   @override
   EventListScreenState createState() => EventListScreenState();
 }
 
-class EventListScreenState extends State<ListEventCheck> {
+class EventListScreenState extends State<ListEvent> {
   final List<String> _events = List.generate(10, (index) => "Event $index");
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
+  String _filter = 'Tất cả';
 
   @override
   void initState() {
@@ -45,6 +46,12 @@ class EventListScreenState extends State<ListEventCheck> {
     });
   }
 
+  void _onFilterChanged(String? value) {
+    setState(() {
+      _filter = value ?? 'All';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +73,7 @@ class EventListScreenState extends State<ListEventCheck> {
           title: const Padding(
             padding: EdgeInsets.only(top: 20), // Add vertical padding
             child: Text(
-              "Điểm Danh Sự kiện",
+              "Sự kiện",
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 30,
@@ -97,6 +104,8 @@ class EventListScreenState extends State<ListEventCheck> {
             children: [
               const SizedBox(height: 80),
               _buildSearchBar(),
+              const SizedBox(height: 20), // Added extra space below the search bar
+              _buildFilterOptions(),
               const SizedBox(height: 20), // Added extra space below the filter options
               Expanded(
                 child: _buildEventList(),
@@ -114,14 +123,14 @@ class EventListScreenState extends State<ListEventCheck> {
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(30),
         boxShadow: const [
-          BoxShadow(
+           BoxShadow(
             color: Colors.black12,
             blurRadius: 10,
             offset: Offset(0, 5),
           ),
         ],
       ),
-      margin: const EdgeInsets.only(top: 30.0),
+      margin: const EdgeInsets.only(top: 10.0),
       child: TextField(
         onChanged: _onSearchChanged,
         decoration: InputDecoration(
@@ -133,14 +142,51 @@ class EventListScreenState extends State<ListEventCheck> {
           filled: true,
           fillColor: Colors.white,
         ),
+        style: const TextStyle(color: Colors.black),
       ),
     );
   }
 
+  Widget _buildFilterOptions() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Increased vertical padding for more space
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, 5),
+          ),
+        ],
+      ),
+      child: DropdownButton<String>(
+        borderRadius: BorderRadius.circular(20),
+        value: _filter,
+        onChanged: _onFilterChanged,
+        items: <String>['Tất cả', 'Sắp tới', 'Đã qua', 'Hôm nay']
+            .map<DropdownMenuItem<String>>((String value) {
+          return DropdownMenuItem<String>(
+
+            value: value,
+            child: Text(value),
+          );
+        }).toList(),
+        isExpanded: true,
+        underline: Container(),
+        icon: const Icon(Icons.filter_list, color: Colors.black),
+        dropdownColor: Colors.white,
+      ),
+    );
+  }
+
+
   Widget _buildEventList() {
     final filteredEvents = _events
         .where((event) =>
-        event.toLowerCase().contains(_searchQuery.toLowerCase()))
+            event.toLowerCase().contains(_searchQuery.toLowerCase()) &&
+            (_filter == 'Tất cả' || _applyFilter(event)))
         .toList();
 
     return ListView.builder(
@@ -150,6 +196,17 @@ class EventListScreenState extends State<ListEventCheck> {
         return _buildEventCard(filteredEvents[index], index);
       },
     );
+  }
+
+  bool _applyFilter(String event) {
+    if (_filter == 'Sắp tới') {
+      return event.contains('Sắp tới');
+    } else if (_filter == 'Đã qua') {
+      return event.contains('Đã qua');
+    } else if (_filter == 'Hôm nay') {
+      return event.contains('Hôm nay');
+    }
+    return true;
   }
 
   Widget _buildEventCard(String event, int index) {
@@ -179,12 +236,22 @@ class EventListScreenState extends State<ListEventCheck> {
               ),
             ],
           ),
-          trailing: const Icon(Icons.qr_code_scanner_rounded, color: Colors.black, size: 50),
+          trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const QRCodeScanScreen(),
+                builder: (context) => EventDetailsScreen(
+                  name: event,
+                  dateStart: "Ngày bắt đầu: ${_getFormattedDate(index)}",
+                  dateEnd:
+                      "Ngày kết thúc: ${_getFormattedDate(index + 1)}", // giả định sự kiện kéo dài 1 ngày
+                  location: "Vị trí $index",
+                  description: "Mô tả cho sự kiện $index.",
+                  checkInStatus: false, // Giả định mặc định là false
+                  checkOutStatus: false, // Giả định mặc định là false
+                  managerId: "Manager $index", // Giả định ID người quản lý
+                ),
               ),
             );
           },

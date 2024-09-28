@@ -1,4 +1,4 @@
-import 'package:doan/User/qrcode.dart';
+import 'package:doan/Component/User/qrcode.dart';
 import 'package:flutter/material.dart';
 
 class EventDetailsScreen extends StatelessWidget {

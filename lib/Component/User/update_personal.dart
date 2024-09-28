@@ -1,4 +1,4 @@
-import 'package:doan/User/edit_personal_info.dart';
+import 'package:doan/Component/User/edit_personal_info.dart';
 import 'package:flutter/material.dart';
 
 class UpdatePersonalScreen extends StatelessWidget {

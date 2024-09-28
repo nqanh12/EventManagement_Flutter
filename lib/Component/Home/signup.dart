@@ -1,5 +1,4 @@
-import 'package:doan/Home/home.dart';
-import 'package:doan/Home/login.dart';
+import 'package:doan/Component/Home/login.dart';
 import 'package:flutter/material.dart';
 
 class Register extends StatefulWidget {
@@ -29,7 +28,7 @@ class RegisterState extends State<Register> {
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.only(top: 60.0),
+              padding: const EdgeInsets.only(top: 120.0),
               child: Column(
                 children: [
                   const Text(
@@ -43,8 +42,9 @@ class RegisterState extends State<Register> {
                   const SizedBox(height: 20),
                   Image.asset(
                     'assets/logo.png',
-                    height: 300, // Increase logo size
-                    width: 300, // Ensure the path is correct
+                    height: 350, // Increase logo size
+                    width: 350,
+                    fit: BoxFit.cover,// Ensure the path is correct
                   ),
                 ],
               ),
@@ -110,7 +110,7 @@ class RegisterState extends State<Register> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const Home(),
+                          builder: (context) => const Login(),
                         ),
                       );
                     },
