@@ -174,7 +174,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                     borderSide: const BorderSide(color: Colors.white),
                   ),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.9),
+                  fillColor: Colors.white.withOpacity(1),
                 ),
                 onChanged: (value) {
                   _filterUsers(value); // Filter users when search query changes
@@ -190,7 +190,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
-                      elevation: 5,
+                      elevation: 10,
+                      margin: const EdgeInsets.only(bottom: 20), // Thêm margin-bottom
                       child: ListTile(
                         leading: CircleAvatar(
                           backgroundColor: const Color.fromARGB(255, 25, 117, 215),
@@ -223,10 +224,15 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showUserForm(),
-        backgroundColor: Colors.white,
-        child: const Icon(Icons.add, color: Colors.black),
+      floatingActionButton: Material(
+        elevation: 10,
+        shadowColor: Colors.blueAccent, // Set the shadow color here
+        shape: const CircleBorder(),
+        child: FloatingActionButton(
+          onPressed: () => _showUserForm(),
+          backgroundColor: Colors.white,
+          child: const Icon(Icons.add, color: Colors.black),
+        ),
       ),
     );
   }

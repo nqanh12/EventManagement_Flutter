@@ -1,9 +1,9 @@
-import 'package:doan/Home/login.dart';
-import 'package:doan/User/language_setting.dart';
-import 'package:doan/User/notification_setting.dart';
-import 'package:doan/User/update_personal.dart';
+import 'package:doan/Component/Home/login.dart';
+import 'package:doan/Component/User/language_setting.dart';
+import 'package:doan/Component/User/notification_setting.dart';
+import 'package:doan/Component/User/update_personal.dart';
 import 'package:flutter/material.dart';
-import 'package:doan/User/change_password.dart';
+import 'package:doan/Component/User/change_password.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -38,7 +38,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.only(top: 120.0), // Adjust padding for AppBar
+          padding: const EdgeInsets.only(top: 100.0), // Adjust padding for AppBar
           child: ListView(
             padding: const EdgeInsets.all(16.0),
             children: [
@@ -103,7 +103,7 @@ class SettingsScreen extends StatelessWidget {
           style: const TextStyle(
             color: Colors.black87,
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.bold,
           ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black87, size: 20),

@@ -1,5 +1,5 @@
 import 'package:permission_handler/permission_handler.dart';
-import 'package:doan/User/student_list_event.dart';
+import 'package:doan/Component/User/student_list_event.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
@@ -63,8 +63,8 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 70),
-                  padding: const EdgeInsets.all(16.0),
+                  margin: const EdgeInsets.only(top: 80, right: 0,left: 0,bottom: 30),
+                  padding: const EdgeInsets.only(top:0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -151,9 +151,9 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
           ),
           // Refined Check-In / Check-Out switch at the top-right corner
           Positioned(
-            bottom: 315,
-            right: 180,
-            left  : 180,
+            bottom: 100,
+            right: 20,
+
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -193,6 +193,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               icon: const Icon(Icons.list),
               label: const Text('Xem danh sách'),
               style: ElevatedButton.styleFrom(
+                elevation: 10,
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -210,9 +211,10 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               onPressed: () {
                 // Add functionality to load data
               },
-              icon: const Icon(Icons.download),
-              label: const Text('Tải dữ liệu'),
+              icon: const Icon(Icons.sync),
+              label: const Text('Đồng bộ'),
               style: ElevatedButton.styleFrom(
+                elevation: 10,
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 30, vertical: 20),

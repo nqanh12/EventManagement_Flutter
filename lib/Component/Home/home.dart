@@ -1,12 +1,11 @@
-import 'package:doan/User/list_event_check.dart';
+import 'package:doan/Component/User/list_event_check.dart';
 import 'package:flutter/material.dart';
-import 'package:doan/User/list_event.dart';
-import 'package:doan/User/notification.dart';
-import 'package:doan/User/profile.dart';
-// ignore: unused_import
-import 'package:doan/User/scannerqr.dart';
-import 'package:doan/User/status_check_in_out.dart';
-
+import 'package:doan/Component/User/list_event.dart';
+import 'package:doan/Component/User/notification.dart';
+import 'package:doan/Component/User/profile.dart';
+import 'package:doan/Component/User/status_check_in_out.dart';
+import 'package:provider/provider.dart';
+import 'package:doan/Handle/user_handle.dart';
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -15,10 +14,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  bool isManager = true; // Set this value based on the user's role
-
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -43,7 +41,10 @@ class _HomeState extends State<Home> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Header with profile
-                  Container(
+                Material(
+                elevation: 8,
+                borderRadius: BorderRadius.circular(10),
+                  child: Container(
                     padding: const EdgeInsets.symmetric(
                         vertical: 10.0, horizontal: 20.0),
                     decoration: BoxDecoration(
@@ -69,7 +70,7 @@ class _HomeState extends State<Home> {
                         ),
                       ],
                     ),
-                  ),
+                  ),),
                   const SizedBox(height: 20),
                   // Body content
                   Expanded(
@@ -131,11 +132,10 @@ class _HomeState extends State<Home> {
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
                                     _buildQuickAccessButton(" Sự kiện", Icons.event, const ListEvent()),
-                                      if (isManager)
-                                       const SizedBox(height: 16),
-                                      // Check if the user is a manager before showing the button
-                                      if (isManager)
+                                    if (userProvider.role == 'manager') ...[
+                                      const SizedBox(height: 16),
                                       _buildQuickAccessButton("Điểm danh", Icons.qr_code_scanner, const ListEventCheck()),
+                                    ],
                                     const SizedBox(height: 16),
                                     _buildQuickAccessButton(" Lịch sử", Icons.history, CheckInOutStatusScreen(events: [
                                             Event(
@@ -181,7 +181,10 @@ class _HomeState extends State<Home> {
                                 ),
                               ),
                               // Status Overview
-                              Container(
+                            Material(
+                            elevation: 10,
+                            borderRadius: BorderRadius.circular(10),
+                            child:Container(
                                 padding: const EdgeInsets.all(16.0),
                                 decoration: BoxDecoration(
                                   color: Colors.white.withOpacity(0.8),
@@ -194,7 +197,7 @@ class _HomeState extends State<Home> {
                                     ),
                                   ],
                                 ),
-                                child: const Column(
+                                child:  const Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
@@ -234,7 +237,7 @@ class _HomeState extends State<Home> {
                                   ],
                                 ),
                               ),
-                            ],
+                              )],
                           ),
                         ),
                       ],
@@ -255,42 +258,46 @@ class _HomeState extends State<Home> {
         borderRadius: BorderRadius.circular(10),
       ),
       margin: const EdgeInsets.only(bottom: 10),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 5),
-            Text("Ngày: $date", style: const TextStyle(color: Colors.black54)),
-            Text("Giờ: $time", style: const TextStyle(color: Colors.black54)),
-            Text("Địa điểm: $location", style: const TextStyle(color: Colors.black54)),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: () {
-                  // Xử lý sự kiện khi nhấn nút
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blueAccent,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-                child: const Text("Xem chi tiết"),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+      child:Material(
+            elevation: 5,
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child:
+                 Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text("Ngày: $date", style: const TextStyle(color: Colors.black54)),
+                        Text("Giờ: $time", style: const TextStyle(color: Colors.black54)),
+                        Text("Địa điểm: $location", style: const TextStyle(color: Colors.black54)),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Xử lý sự kiện khi nhấn nút
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blueAccent,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            ),
+                            child: const Text("Xem chi tiết"),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ));
+              }
 
   Widget _buildQuickAccessButton(String label, IconData icon, Widget destination) {
     return ElevatedButton.icon(
@@ -303,6 +310,7 @@ class _HomeState extends State<Home> {
       icon: Icon(icon, color: Colors.black),
       label: Text(label),
       style: ElevatedButton.styleFrom(
+        elevation: 5,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         padding: const EdgeInsets.symmetric(vertical: 22),
