@@ -2,6 +2,7 @@ import 'package:doan/Component/User/qrcode.dart';
 import 'package:flutter/material.dart';
 
 class EventDetailsScreen extends StatelessWidget {
+  final String eventID;
   final String name;
   final String dateStart;
   final String dateEnd;
@@ -10,9 +11,13 @@ class EventDetailsScreen extends StatelessWidget {
   final bool checkInStatus;
   final bool checkOutStatus;
   final String managerId;
+  final String role;
+  final String token;
+  final bool isRegistered; // Add this variable
 
   const EventDetailsScreen({
     super.key,
+    required this.eventID,
     required this.name,
     required this.dateStart,
     required this.dateEnd,
@@ -21,6 +26,9 @@ class EventDetailsScreen extends StatelessWidget {
     required this.checkInStatus,
     required this.checkOutStatus,
     required this.managerId,
+    required this.role,
+    required this.token,
+    required this.isRegistered, // Add this parameter
   });
 
   @override
@@ -28,7 +36,7 @@ class EventDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          "Chi tiết sự kiện",
+          "Chi tiết",
           style: TextStyle(
             color: Colors.black,
             fontSize: 30,
@@ -170,7 +178,7 @@ class EventDetailsScreen extends StatelessWidget {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              'Manager ID: $managerId',
+                              'Chủ trì: $managerId',
                               style: const TextStyle(
                                 color: Colors.black,
                                 fontSize: 16,
@@ -218,11 +226,11 @@ class EventDetailsScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
-                    onPressed: () {
-                      // Handle event registration
+                    onPressed: isRegistered ? null : () {
+                      _showRegisterDialog(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                      backgroundColor: isRegistered ? Colors.grey : Colors.green,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
@@ -238,9 +246,12 @@ class EventDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: null, // Initially disabled
+                    onPressed: isRegistered ? () {
+                      _showCancelDialog(context);
+                    } : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
+                      backgroundColor: isRegistered ? Colors.red : Colors.grey,
+                      foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
                         vertical: 12,
@@ -255,17 +266,17 @@ class EventDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: isRegistered ? () {
                       // Open QR code screen
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const QRCodePage(eventId: "sv201930"),
+                          builder: (context) => QRCodePage(eventId: eventID, token: token, role: role),
                         ),
                       );
-                    },
+                    } : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
+                      backgroundColor: isRegistered ? Colors.blue : Colors.grey,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 32,
@@ -289,4 +300,56 @@ class EventDetailsScreen extends StatelessWidget {
       ),
     );
   }
+}
+void _showRegisterDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Xác nhận đăng ký"),
+        content: const Text("Bạn có muốn đăng ký sự kiện này không?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Handle registration logic here
+            },
+            child: const Text("Đồng ý"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("Hủy"),
+          ),
+        ],
+      );
+    },
+  );
+}
+void _showCancelDialog(BuildContext context) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Xác nhận hủy đăng ký"),
+        content: const Text("Bạn có muốn hủy đăng ký sự kiện này không?"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Handle registration logic here
+            },
+            child: const Text("Đồng ý"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text("Hủy"),
+          ),
+        ],
+      );
+    },
+  );
 }

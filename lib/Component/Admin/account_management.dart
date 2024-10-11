@@ -1,52 +1,46 @@
 import 'package:flutter/material.dart';
 
 class User {
-  String name;
+  String userName;
+  String password;
+  String fullName;
+  String classId;
   String email;
-  String role;
+  String phone;
+  String address;
+  Set<String> roles;
 
-  User({required this.name, required this.email, required this.role});
+  User({
+    required this.userName,
+    required this.password,
+    required this.fullName,
+    required this.classId,
+
+    required this.email,
+    required this.phone,
+    required this.address,
+    required this.roles,
+  });
 }
 
 class UserManagementScreen extends StatefulWidget {
   const UserManagementScreen({super.key});
-
-  @override
-  _UserManagementScreenState createState() => _UserManagementScreenState();
+  UserManagementScreenState createState() => UserManagementScreenState();
 }
 
-class _UserManagementScreenState extends State<UserManagementScreen> {
+class UserManagementScreenState extends State<UserManagementScreen> {
   List<User> users = [
-    User(name: 'Nguyen Van A', email: 'nguyenvana@example.com', role: 'Admin'),
-    User(name: 'Tran Thi B', email: 'tranthib@example.com', role: 'User'),
-    User(name: 'Le Van C', email: 'levanc@example.com', role: 'Manager'),
-    User(name: 'Nguyen Van D', email: 'nguyenvand@example.com', role: 'User'),
-    User(name: 'Pham Thi E', email: 'phamthie@example.com', role: 'Manager'),
-    User(name: 'Hoang Van F', email: 'hoangvanf@example.com', role: 'Admin'),
-    User(name: 'Tran Van G', email: 'tranvang@example.com', role: 'User'),
-    User(name: 'Le Thi H', email: 'lethih@example.com', role: 'Admin'),
-    User(name: 'Vu Van I', email: 'vuvani@example.com', role: 'Manager'),
-    User(name: 'Pham Van J', email: 'phamvanj@example.com', role: 'User'),
-    User(name: 'Nguyen Thi K', email: 'nguyenthik@example.com', role: 'Admin'),
-    User(name: 'Tran Van L', email: 'tranvanl@example.com', role: 'Manager'),
-    User(name: 'Le Van M', email: 'levanm@example.com', role: 'User'),
-    User(name: 'Nguyen Thi N', email: 'nguyenthin@example.com', role: 'User'),
-    User(name: 'Pham Van O', email: 'phamvano@example.com', role: 'Admin'),
-    User(name: 'Hoang Thi P', email: 'hoangthip@example.com', role: 'Manager'),
-    User(name: 'Tran Van Q', email: 'tranvanq@example.com', role: 'User'),
-    User(name: 'Le Thi R', email: 'lethir@example.com', role: 'User'),
-    User(name: 'Vu Van S', email: 'vuvans@example.com', role: 'Manager'),
-    User(name: 'Pham Thi T', email: 'phamthit@example.com', role: 'Admin'),
-    User(name: 'Nguyen Van U', email: 'nguyenvanu@example.com', role: 'User'),
-    User(name: 'Tran Thi V', email: 'tranthiv@example.com', role: 'Manager'),
-    User(name: 'Le Van W', email: 'levanw@example.com', role: 'Admin'),
-    User(name: 'Nguyen Thi X', email: 'nguyenthix@example.com', role: 'User'),
-    User(name: 'Pham Van Y', email: 'phamvany@example.com', role: 'Manager'),
-    User(name: 'Hoang Thi Z', email: 'hoangthiz@example.com', role: 'Admin'),
-    User(name: 'Tran Van AA', email: 'tranvanaa@example.com', role: 'User'),
-    User(name: 'Le Thi BB', email: 'lethibb@example.com', role: 'Admin'),
-    User(name: 'Vu Van CC', email: 'vuvancc@example.com', role: 'Manager'),
-    User(name: 'Pham Thi DD', email: 'phamthidd@example.com', role: 'User'),
+    User(
+      userName: 'nguyenvana',
+      password: 'password123',
+      fullName: 'Nguyen Van A',
+      classId: 'Class1',
+      email: 'nguyenvana@example.com',
+      phone: '123456789',
+      address: '123 Main St',
+      roles: {'Admin'},
+    ),
+    // Add more users here
   ];
 
   List<User> filteredUsers = [];
@@ -66,8 +60,8 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
       } else {
         filteredUsers = users.where((user) {
           final lowerCaseQuery = query.toLowerCase();
-          return user.name.toLowerCase().contains(lowerCaseQuery) ||
-              user.role.toLowerCase().contains(lowerCaseQuery);
+          return user.fullName.toLowerCase().contains(lowerCaseQuery) ||
+              user.roles.any((role) => role.toLowerCase().contains(lowerCaseQuery));
         }).toList();
       }
     });
@@ -76,24 +70,47 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
   // Function to handle adding or editing users
   void _showUserForm({User? user}) {
     final isEditing = user != null;
-    final roleController = TextEditingController(text: isEditing ? user.role : '');
-    final nameController = TextEditingController(text: isEditing ? user.name : '');
-    final emailController = TextEditingController(text: isEditing ? user.email : '');
+    final userNameController = TextEditingController(text: isEditing ? user.userName : '');
+    final passwordController = TextEditingController(text: isEditing ? user.password : '');
+    String selectedRole = isEditing && user.roles.isNotEmpty ? user.roles.first : 'USER';
 
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: Text(isEditing ? "Sửa người dùng" : "Thêm người dùng"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildTextField(nameController, "Họ và tên"),
-              const SizedBox(height: 10),
-              _buildTextField(emailController, "Email"),
-              const SizedBox(height: 10),
-              _buildTextField(roleController, "Quyền"),
-            ],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildTextField(userNameController, "Tên đăng nhập"),
+                const SizedBox(height: 10),
+                _buildTextField(passwordController, "Mật khẩu"),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  value: selectedRole,
+                  decoration: InputDecoration(
+                    labelText: "Quyền",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    filled: true,
+                    fillColor: Colors.white.withOpacity(0.9),
+                  ),
+                  items: ['USER', 'MANAGER'].map((role) {
+                    return DropdownMenuItem<String>(
+                      value: role,
+                      child: Text(role),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedRole = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -104,14 +121,19 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
               onPressed: () {
                 setState(() {
                   if (isEditing) {
-                    user.name = nameController.text;
-                    user.email = emailController.text;
-                    user.role = roleController.text;
+                    user.userName = userNameController.text;
+                    user.password = passwordController.text;
+                    user.roles = {selectedRole};
                   } else {
                     users.add(User(
-                      name: nameController.text,
-                      email: emailController.text,
-                      role: roleController.text,
+                      userName: userNameController.text,
+                      password: passwordController.text,
+                      fullName: '',
+                      classId: '',
+                      email: '',
+                      phone: '',
+                      address: '',
+                      roles: {selectedRole},
                     ));
                   }
                   filteredUsers = users; // Reset filtered list after adding or editing
@@ -138,13 +160,7 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
         fillColor: Colors.white.withOpacity(0.9),
       ),
     );
-  }
 
-  void _deleteUser(User user) {
-    setState(() {
-      users.remove(user);
-      filteredUsers = users; // Reset filtered list after deletion
-    });
   }
 
   @override
@@ -196,11 +212,11 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                         leading: CircleAvatar(
                           backgroundColor: const Color.fromARGB(255, 25, 117, 215),
                           child: Text(
-                            user.name[0],
+                            user.fullName[0],
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                           ),
                         ),
-                        title: Text(user.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text(user.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(user.email),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -208,10 +224,6 @@ class _UserManagementScreenState extends State<UserManagementScreen> {
                             IconButton(
                               icon: const Icon(Icons.edit, color: Colors.orange),
                               onPressed: () => _showUserForm(user: user),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteUser(user),
                             ),
                           ],
                         ),

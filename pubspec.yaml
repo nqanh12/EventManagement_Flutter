@@ -35,6 +35,10 @@ dependencies:
   qr_code_scanner: ^1.0.1
   intl: ^0.17.0
   provider: ^6.0.0
+  http: ^0.13.3
+  shared_preferences: ^2.0.6
+  jwt_decoder: ^2.0.1
+  logger: ^1.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -66,6 +70,7 @@ flutter:
   assets:
     - assets/logo.png
     - assets/person.png
+    - lib/API/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -10,24 +10,36 @@ class EditPersonalInfoScreen extends StatefulWidget {
 }
 
 class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _genderController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _classController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _addressController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     // Prepopulate the controllers with default data (this data can come from a model or API call)
+    _nameController.text = "Nguyễn Quốc Anh";
     _genderController.text = "Nam";
     _dobController.text = "12/05/2003";
     _phoneController.text = "+84 98 728 46 71";
+    _classController.text = "12DHTH06";
+    _emailController.text = "chaybon@gmail.com";
+    _addressController.text = "566/197/25 Nguyễn Thái Sơn";
   }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _genderController.dispose();
     _dobController.dispose();
     _phoneController.dispose();
+    _classController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
     super.dispose();
   }
 
@@ -105,17 +117,20 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildInputField(
-                                "Giới tính", _genderController, false),
-                            _buildInputField(
-                                "Ngày sinh", _dobController, false),
-                            _buildInputField(
-                                "Điện thoại", _phoneController, false),
+                            _buildInputField("Họ và tên", _nameController, false),
+                            _buildInputField("Giới tính", _genderController, false),
+                            _buildInputField("Ngày sinh", _dobController, false),
+                            _buildInputField("Điện thoại", _phoneController, false),
+                            _buildInputField("Lớp", _classController, false),
+                            _buildInputField("Email", _emailController, false),
+                            _buildInputField("Địa chỉ", _addressController, false),
                             const SizedBox(height: 20),
                             Center(
                               child: ElevatedButton(
                                 onPressed: () {
                                   // Handle update logic
+                                  // For example, you can call an API to update the user information
+                                  // and then show a success message or navigate back
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue,

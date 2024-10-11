@@ -1,3 +1,4 @@
+import 'package:doan/API/api_register.dart';
 import 'package:doan/Component/Home/login.dart';
 import 'package:flutter/material.dart';
 
@@ -9,6 +10,43 @@ class Register extends StatefulWidget {
 }
 
 class RegisterState extends State<Register> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+  final RegisterService _registerService = RegisterService();
+
+  void _handleRegister() async {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    // Validate the input
+    if (password != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu không khớp nhau')),
+      );
+      return;
+    }
+    // Call the register service
+    final response = await _registerService.register(username, password);
+    if (response != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đăng kí thành công')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const Login(),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đăng kí thất bại hoặc tài khoản đã tồn tại')),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +66,7 @@ class RegisterState extends State<Register> {
           Align(
             alignment: Alignment.topCenter,
             child: Padding(
-              padding: const EdgeInsets.only(top: 120.0),
+              padding: const EdgeInsets.only(top: 100.0),
               child: Column(
                 children: [
                   const Text(
@@ -42,9 +80,9 @@ class RegisterState extends State<Register> {
                   const SizedBox(height: 20),
                   Image.asset(
                     'assets/logo.png',
-                    height: 350, // Increase logo size
-                    width: 350,
-                    fit: BoxFit.cover,// Ensure the path is correct
+                    height: 300, // Increase logo size
+                    width: 300,
+                    fit: BoxFit.cover, // Ensure the path is correct
                   ),
                 ],
               ),
@@ -59,6 +97,7 @@ class RegisterState extends State<Register> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextField(
+                    controller: _usernameController,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
@@ -74,11 +113,23 @@ class RegisterState extends State<Register> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    obscureText: true,
+                    controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
                       prefixIcon: const Icon(Icons.lock, color: Color.fromARGB(255, 0, 0, 0)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible = !_isPasswordVisible;
+                          });
+                        },
+                      ),
                       labelText: 'Mật khẩu',
                       labelStyle: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                       border: OutlineInputBorder(
@@ -90,11 +141,23 @@ class RegisterState extends State<Register> {
                   ),
                   const SizedBox(height: 16),
                   TextField(
-                    obscureText: true,
+                    controller: _confirmPasswordController,
+                    obscureText: !_isConfirmPasswordVisible,
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.2),
                       prefixIcon: const Icon(Icons.lock, color: Color.fromARGB(255, 0, 0, 0)),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          color: const Color.fromARGB(255, 0, 0, 0),
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                          });
+                        },
+                      ),
                       labelText: 'Xác nhận mật khẩu',
                       labelStyle: const TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                       border: OutlineInputBorder(
@@ -107,16 +170,10 @@ class RegisterState extends State<Register> {
                   const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Login(),
-                        ),
-                      );
+                      _handleRegister();
                     },
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 80, vertical: 15),
+                      padding: const EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0),
                       ),
