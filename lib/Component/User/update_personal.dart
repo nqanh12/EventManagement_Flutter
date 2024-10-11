@@ -2,9 +2,9 @@ import 'package:doan/Component/User/edit_personal_info.dart';
 import 'package:flutter/material.dart';
 
 class UpdatePersonalScreen extends StatelessWidget {
-  final String role;
 
-  const UpdatePersonalScreen({super.key, required this.role});
+  final String token;
+  const UpdatePersonalScreen({super.key, required this.token});
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +101,9 @@ class UpdatePersonalScreen extends StatelessWidget {
                         _buildInfoRow("Giới tính", "Nam"),
                         _buildInfoRow("Ngày sinh", "12/05/2003"),
                         _buildInfoRow("Điện thoại", "+84 98 728 46 71"),
+                        _buildInfoRow("Lớp", "12DHTH06"),
+                        _buildInfoRow("Email", "chaybon@gmail.com"),
+                        _buildInfoRow("Địa chỉ", "566/197/25 Nguyễn Thái Sơn"),
                         const SizedBox(height: 20),
                         // Edit Button
                         Center(

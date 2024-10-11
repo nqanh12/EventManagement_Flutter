@@ -1,6 +1,7 @@
 import 'package:doan/Component/Admin/account_management.dart';
 import 'package:doan/Component/Admin/event_list_management.dart';
 import 'package:doan/Component/Admin/event_management.dart';
+import 'package:doan/Component/Home/login.dart';
 import 'package:flutter/material.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -27,11 +28,60 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
+  void _showLogoutDialog(BuildContext context, Widget screen) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: const Text(
+            "Xác nhận đăng xuất",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          content: const Text("Bạn có chắc chắn muốn đăng xuất không?"),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(
+                "Không",
+                style: TextStyle(color: Colors.blueAccent),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => screen),
+                ); // Navigate to the login screen
+              },
+              child: const Text(
+                "Có",
+                style: TextStyle(color: Colors.redAccent),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         elevation: 10,
+        automaticallyImplyLeading: false, // Remove the default back button
+        leading: IconButton(
+          icon: const Icon(Icons.logout_sharp),
+          onPressed: () {
+            _showLogoutDialog(context, const Login()); // Replace with your login screen
+          },
+        ),
         title: const Text(
           "Quản Trị",
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
@@ -85,7 +135,6 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
 // Example ParticipantListScreen, ExportReportScreen
 // You can replace these with your actual widget implementations
 
-
 class ExportReportScreen extends StatelessWidget {
   const ExportReportScreen({super.key});
 
@@ -105,45 +154,4 @@ class ExportReportScreen extends StatelessWidget {
       child: const Center(child: Text('Export Report Screen')),
     );
   }
-}
-void _showLogoutDialog(BuildContext context, Widget screen) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: const Text(
-          "Xác nhận đăng xuất",
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-        ),
-        content: const Text("Bạn có chắc chắn muốn đăng xuất không?"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-            },
-            child: const Text(
-              "Không",
-              style: TextStyle(color: Colors.blueAccent),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop(); // Close the dialog
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => screen),
-              ); // Navigate to the login screen
-            },
-            child: const Text(
-              "Có",
-              style: TextStyle(color: Colors.redAccent),
-            ),
-          ),
-        ],
-      );
-    },
-  );
 }

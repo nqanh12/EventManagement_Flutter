@@ -1,23 +1,50 @@
 import 'package:doan/Component/Home/home.dart';
 import 'package:doan/Component/User/scannerqr.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:intl/intl.dart';
 
 class ListEventCheck extends StatefulWidget {
-  const ListEventCheck({super.key});
+  final String role;
+  final String token;
+  const ListEventCheck({super.key, required this.role, required this.token});
 
   @override
   EventListScreenState createState() => EventListScreenState();
 }
 
 class EventListScreenState extends State<ListEventCheck> {
-  final List<String> _events = List.generate(10, (index) => "Event $index");
+  List<dynamic> _events = [];
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
+
+  Future<void> _fetchEvents() async {
+    const String url = 'http://10.0.2.2:8080/api/events/listEvent';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        _events = json.decode(response.body)['result'];
+      });
+    } else {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load events: ${response.statusCode}')),
+      );
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _fetchEvents();
   }
 
   @override
@@ -34,15 +61,22 @@ class EventListScreenState extends State<ListEventCheck> {
   }
 
   void _loadMoreEvents() {
-    setState(() {
-      _events.addAll(List.generate(10, (index) => "Event ${_events.length + index}"));
-    });
+    // setState(() {
+    //   _events.addAll(List.generate(10, (index) => "Event ${_events.length + index}"));
+    // });
   }
 
   void _onSearchChanged(String query) {
     setState(() {
       _searchQuery = query;
     });
+  }
+
+  // Định dạng ngày tháng năm với A.M./P.M.
+  String _formatDateTime(String dateTime) {
+    final DateTime parsedDate = DateTime.parse(dateTime);
+    final DateFormat formatter = DateFormat('dd/MM/yyyy -- HH:mm a');
+    return formatter.format(parsedDate);
   }
 
   @override
@@ -58,7 +92,7 @@ class EventListScreenState extends State<ListEventCheck> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const Home(),
+                  builder: (context) => Home(role: widget.role, token: widget.token),
                 ),
               );
             },
@@ -66,7 +100,7 @@ class EventListScreenState extends State<ListEventCheck> {
           title: const Padding(
             padding: EdgeInsets.only(top: 20), // Add vertical padding
             child: Text(
-              "Điểm Danh Sự kiện",
+              "Điểm Danh",
               style: TextStyle(
                 color: Colors.black,
                 fontSize: 30,
@@ -140,7 +174,7 @@ class EventListScreenState extends State<ListEventCheck> {
   Widget _buildEventList() {
     final filteredEvents = _events
         .where((event) =>
-        event.toLowerCase().contains(_searchQuery.toLowerCase()))
+        event['name'].toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
 
     return ListView.builder(
@@ -152,7 +186,7 @@ class EventListScreenState extends State<ListEventCheck> {
     );
   }
 
-  Widget _buildEventCard(String event, int index) {
+  Widget _buildEventCard(dynamic event, int index) {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
@@ -165,7 +199,7 @@ class EventListScreenState extends State<ListEventCheck> {
         child: ListTile(
           contentPadding: const EdgeInsets.all(5), // Reduced content padding for tighter layout
           title: Text(
-            event,
+            event['name'],
             style: const TextStyle(
                 color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20), // Increased font size for title
           ),
@@ -174,7 +208,7 @@ class EventListScreenState extends State<ListEventCheck> {
             children: [
               const SizedBox(height: 5), // Added spacing between title and subtitle
               Text(
-                "Ngày bắt đầu: ${_getFormattedDate(index)}",
+                "Ngày bắt đầu: ${_formatDateTime(event['dateStart'])} ",
                 style: const TextStyle(color: Colors.black54),
               ),
             ],
@@ -191,10 +225,5 @@ class EventListScreenState extends State<ListEventCheck> {
         ),
       ),
     );
-  }
-
-  String _getFormattedDate(int index) {
-    DateTime now = DateTime.now().add(Duration(days: index));
-    return "${now.day}-${now.month}-${now.year}";
   }
 }

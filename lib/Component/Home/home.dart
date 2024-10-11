@@ -1,13 +1,15 @@
+
 import 'package:doan/Component/User/list_event_check.dart';
 import 'package:flutter/material.dart';
 import 'package:doan/Component/User/list_event.dart';
 import 'package:doan/Component/User/notification.dart';
 import 'package:doan/Component/User/profile.dart';
 import 'package:doan/Component/User/status_check_in_out.dart';
-import 'package:provider/provider.dart';
-import 'package:doan/Handle/user_handle.dart';
+
 class Home extends StatefulWidget {
-  const Home({super.key});
+  final String role;
+  final String token;
+  const Home({super.key, required this.role, required this.token});
 
   @override
   State<Home> createState() => _HomeState();
@@ -16,7 +18,6 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
     return Scaffold(
       body: Stack(
         children: [
@@ -131,12 +132,12 @@ class _HomeState extends State<Home> {
                                   mainAxisAlignment: MainAxisAlignment.start,
                                   crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    _buildQuickAccessButton(" Sự kiện", Icons.event, const ListEvent()),
-                                    if (userProvider.role == 'manager') ...[
-                                      const SizedBox(height: 16),
-                                      _buildQuickAccessButton("Điểm danh", Icons.qr_code_scanner, const ListEventCheck()),
-                                    ],
+                                    _buildQuickAccessButton(" Sự kiện", Icons.event, ListEvent(role: widget.role,token: widget.token)),
                                     const SizedBox(height: 16),
+                                    if (widget.role == '[MANAGER]') ...[
+                                      _buildQuickAccessButton("Điểm danh", Icons.person, ListEventCheck(role: widget.role,token: widget.token)),
+                                      const SizedBox(height: 16),
+                                    ],
                                     _buildQuickAccessButton(" Lịch sử", Icons.history, CheckInOutStatusScreen(events: [
                                             Event(
                                               name: 'Orientation Day',
@@ -176,7 +177,7 @@ class _HomeState extends State<Home> {
                                     const SizedBox(height: 16),
                                     _buildQuickAccessButton("Thông báo", Icons.notifications, const NotificationsScreen()),
                                     const SizedBox(height: 16),
-                                    _buildQuickAccessButton(" Cài đặt", Icons.settings, const SettingsScreen()),
+                                    _buildQuickAccessButton(" Cài đặt", Icons.settings, SettingsScreen(token: widget.token)),
                                   ],
                                 ),
                               ),
