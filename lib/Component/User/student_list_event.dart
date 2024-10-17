@@ -1,33 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Participant {
-  String id;
-  String name;
+  String userName;
   bool checkInStatus;
+  DateTime? checkInTime;
   bool checkOutStatus;
+  DateTime? checkOutTime;
+  String? fullName;
 
   Participant({
-    required this.id,
-    required this.name,
+    required this.userName,
     required this.checkInStatus,
+    this.checkInTime,
     required this.checkOutStatus,
+    this.checkOutTime,
+    this.fullName,
   });
+
+  factory Participant.fromJson(Map<String, dynamic> json) {
+    return Participant(
+      userName: json['userName'],
+      checkInStatus: json['checkInStatus'],
+      checkInTime: json['checkInTime'] != null ? DateTime.parse(json['checkInTime']) : null,
+      checkOutStatus: json['checkOutStatus'],
+      checkOutTime: json['checkOutTime'] != null ? DateTime.parse(json['checkOutTime']) : null,
+    );
+  }
 }
 
-class EventParticipantsScreen extends StatelessWidget {
-  final List<Participant> participants = [
-    Participant(id: '1', name: 'Nguyen Van A', checkInStatus: true, checkOutStatus: false),
-    Participant(id: '2', name: 'Tran Thi B', checkInStatus: true, checkOutStatus: true),
-    Participant(id: '3', name: 'Tran Van C', checkInStatus: false, checkOutStatus: true),
-    Participant(id: '4', name: 'Nguyen Van D', checkInStatus: false, checkOutStatus: true),
-    Participant(id: '5', name: 'Nguyen Van E', checkInStatus: false, checkOutStatus: true),
-    Participant(id: '6', name: 'Le Van F', checkInStatus: false, checkOutStatus: false),
-    Participant(id: '7', name: 'Nguyen Van G', checkInStatus: false, checkOutStatus: false),
-    Participant(id: '8', name: 'Nguyen Van H', checkInStatus: false, checkOutStatus: false),
-    Participant(id: '9', name: 'Le Van J', checkInStatus: true, checkOutStatus: true),
-  ];
+class EventParticipantsScreen extends StatefulWidget {
+  final String token;
+  final String eventId;
 
-  EventParticipantsScreen({super.key});
+  const EventParticipantsScreen({super.key, required this.token, required this.eventId});
+
+  @override
+  EventParticipantsScreenState createState() => EventParticipantsScreenState();
+}
+
+class EventParticipantsScreenState extends State<EventParticipantsScreen> {
+  List<Participant> participants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchParticipants();
+  }
+
+  Future<void> _fetchParticipants() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/events/participants/${widget.eventId}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final List<dynamic> participantsJson = data['result']['participants'];
+      setState(() {
+        participants = participantsJson.map((json) => Participant.fromJson(json)).toList();
+        _fetchFullNames();
+      });
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load participants: ${response.statusCode}')),
+      );
+    }
+  }
+
+  Future<void> _fetchFullNames() async {
+    for (var participant in participants) {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8080/api/users/getFullName/${participant.userName}'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          participant.fullName = data['result']['full_Name'];
+        });
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load full name for ${participant.userName}: ${response.statusCode}')),
+        );
+      }
+    }
+  }
 
   // Hàm đếm số lượng sinh viên đã check cả 2 in và out
   int countCheckInAndOut() {
@@ -127,85 +193,88 @@ class EventParticipantsScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Expanded(
-                child: ListView.builder(
-                  itemCount: participants.length,
-                  itemBuilder: (context, index) {
-                    final participant = participants[index];
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                      elevation: 6,
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      child: Container(
-                        decoration: BoxDecoration(
+                child: RefreshIndicator(
+                  onRefresh: _fetchParticipants,
+                  child: ListView.builder(
+                    itemCount: participants.length,
+                    itemBuilder: (context, index) {
+                      final participant = participants[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.0),
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color.fromARGB(255, 240, 245, 252),
-                              Color.fromARGB(255, 197, 216, 236),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
                         ),
-                        padding: const EdgeInsets.all(16),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: const Color.fromARGB(255, 25, 117, 215),
-                            child: Text(
-                              participant.name[0],
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        elevation: 6,
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15.0),
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color.fromARGB(255, 240, 245, 252),
+                                Color.fromARGB(255, 197, 216, 236),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
                           ),
-                          title: Text(
-                            participant.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Check-in: ',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                                  ),
-                                  Text(
-                                    participant.checkInStatus ? "Đã Check-in" : "Chưa Check-in",
-                                    style: TextStyle(
-                                      color: participant.checkInStatus ? Colors.green : Colors.red,
-                                    ),
-                                  ),
-                                ],
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+                              child: Text(
+                                participant.userName[0],
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                               ),
-                              const SizedBox(height: 5),
-                              Row(
-                                children: [
-                                  Text(
-                                    'Check-out: ',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
-                                  ),
-                                  Text(
-                                    participant.checkOutStatus ? "Đã Check-out" : "Chưa Check-out",
-                                    style: TextStyle(
-                                      color: participant.checkOutStatus ? Colors.green : Colors.red,
+                            ),
+                            title: Text(
+                              participant.fullName ?? "Chưa cập nhật",
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Check-in: ',
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          trailing: Icon(
-                            getStatusIcon(participant),
-                            color: getStatusColor(participant),
-                            size: 32,
+                                    Text(
+                                      participant.checkInStatus ? "Đã Check-in" : "Chưa Check-in",
+                                      style: TextStyle(
+                                        color: participant.checkInStatus ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 5),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Check-out: ',
+                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                                    ),
+                                    Text(
+                                      participant.checkOutStatus ? "Đã Check-out" : "Chưa Check-out",
+                                      style: TextStyle(
+                                        color: participant.checkOutStatus ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            trailing: Icon(
+                              getStatusIcon(participant),
+                              color: getStatusColor(participant),
+                              size: 32,
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],

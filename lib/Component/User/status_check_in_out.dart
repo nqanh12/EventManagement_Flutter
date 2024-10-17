@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class CheckInOutStatusScreen extends StatefulWidget {
-  final List<Event> events;
-
-  const CheckInOutStatusScreen({super.key, required this.events});
+  final String token;
+  final String role;
+  const CheckInOutStatusScreen({super.key, required this.token, required this.role});
 
   @override
-  _CheckInOutStatusScreenState createState() => _CheckInOutStatusScreenState();
+  CheckInOutStatusScreenState createState() => CheckInOutStatusScreenState();
 }
 
-class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
+class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
+  List<Event> events = [];
   String? selectedYear;
   List<String> years = [];
 
@@ -17,6 +20,8 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
   void initState() {
     super.initState();
     _initializeYears();
+    _fetchRegisteredEvents();
+    selectedYear = DateTime.now().year.toString();
   }
 
   void _initializeYears() {
@@ -26,12 +31,54 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
     }
   }
 
-  List<Event> _filterEventsByYear() {
-    if (selectedYear == null) {
-      return widget.events;
+  Future<void> _fetchRegisteredEvents() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/users/getRegisteredEvents'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      final List<Event> fetchedEvents = (data['result']['eventsRegistered'] as List)
+          .map((event) => Event.fromJson(event))
+          .toList();
+
+      for (var event in fetchedEvents) {
+        event.name = await _fetchEventName(event.eventId);
+      }
+
+      setState(() {
+        events = fetchedEvents;
+      });
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load registered events: ${response.statusCode}')),
+      );
     }
-    return widget.events.where((event) {
-      return DateTime.parse(event.dateStart).year.toString() == selectedYear;
+  }
+
+  Future<String?> _fetchEventName(String eventId) async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/events/getEventName/$eventId'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      return data['result']['name'];
+    } else {
+      return null;
+    }
+  }
+
+  List<Event> _filterEventsByYear() {
+    return events.where((event) {
+      return DateTime.parse(event.registrationDate).year.toString() == selectedYear;
     }).toList();
   }
 
@@ -41,12 +88,32 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Lịch sử',
-          style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00,
+          ),
+          child: Text(
+            "Trạng thái",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06,
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -63,55 +130,86 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: DropdownButton<String>(
-                hint: const Text(
-                  "Chọn năm",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                value: selectedYear,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedYear = newValue;
-                  });
-                },
-                items: years.map<DropdownMenuItem<String>>((String year) {
-                  return DropdownMenuItem<String>(
-                    value: year,
-                    child: Text(
-                      year,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 16,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    isExpanded: true,
+                    dropdownColor: Colors.white,
+                    hint: const Text(
+                      "Chọn năm",
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  );
-                }).toList(),
-                dropdownColor: Colors.white,
-                icon: const Icon(
-                  Icons.arrow_drop_down,
-                  color: Colors.white,
-                ),
-                style: const TextStyle(
-                  color: Colors.black,
-                  fontSize: 16,
-                ),
-                underline: Container(
-                  height: 2,
-                  color: Colors.white,
+                    value: selectedYear,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedYear = newValue;
+                      });
+                    },
+                    items: years.map<DropdownMenuItem<String>>((String year) {
+                      return DropdownMenuItem<String>(
+                        value: year,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Text(
+                            year,
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    icon: const Icon(
+                      Icons.arrow_drop_down,
+                      color: Colors.black,
+                      size: 24,
+                    ),
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                    ),
+                  ),
                 ),
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: filteredEvents.length,
-                itemBuilder: (context, index) {
-                  final event = filteredEvents[index];
-                  return _buildEventCard(event);
-                },
+              child: filteredEvents.isEmpty
+                  ? const Center(
+                child: Text(
+                  'Chưa đăng kí sự kiện nào',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black54,
+                  ),
+                ),
+              )
+                  : RefreshIndicator(
+                onRefresh: _fetchRegisteredEvents,
+                child: ListView.builder(
+                  itemCount: filteredEvents.length,
+                  itemBuilder: (context, index) {
+                    final event = filteredEvents[index];
+                    return _buildEventCard(event);
+                  },
+                ),
               ),
             ),
           ],
@@ -121,7 +219,6 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
   }
 
   Widget _buildEventCard(Event event) {
-    // Determine the check-in/check-out status
     String status;
     Color statusColor;
     IconData statusIcon;
@@ -131,17 +228,17 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
       statusColor = Colors.green;
       statusIcon = Icons.check_circle_outline;
     } else if (event.checkInStatus) {
-      status = 'Chưa hoàn thành';
+      status = 'Còn thiếu check out';
       statusColor = Colors.orange;
       statusIcon = Icons.warning_amber;
     } else if (event.checkOutStatus) {
-      status = 'Chưa hoàn thành';
+      status = 'Còn thiếu check in';
       statusColor = Colors.orange;
       statusIcon = Icons.logout;
-    } else if (DateTime.now().isAfter(DateTime.parse(event.dateEnd))) {
+    } else if (DateTime.now().isAfter(DateTime.parse(event.registrationDate))) {
       status = 'Đã Bỏ lỡ';
       statusColor = Colors.red;
-      statusIcon = Icons.cancel;
+      statusIcon = Icons.error_outline;
     } else {
       status = 'Pending';
       statusColor = Colors.yellow;
@@ -166,19 +263,64 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
         leading: Icon(
           statusIcon,
           color: statusColor,
-          size: 30,
+          size: 50,
         ),
         title: Text(
-          event.name,
+          event.name ?? 'Loading ....',
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: 23,
             fontWeight: FontWeight.bold,
             color: Colors.black,
           ),
         ),
-        subtitle: Text(
-          'BĐ: ${event.dateStart}\nKT: ${event.dateEnd}',
-          style: const TextStyle(fontSize: 14, color: Colors.black54),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                const Text(
+                  "Check - in :",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Icon(
+                  event.checkInStatus ? Icons.check_circle_outline : Icons.cancel_outlined,
+                  color: event.checkInStatus ? Colors.green : Colors.red,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Giờ vào:  ${event.checkInTime ?? 'Chưa điểm danh'}',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+            const SizedBox(height: 5),
+            Row(
+              children: [
+                const Text(
+                  "Check - out :",
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Icon(
+                  event.checkOutStatus ? Icons.check_circle_outline : Icons.cancel_outlined,
+                  color: event.checkOutStatus ? Colors.green : Colors.red,
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              'Giờ ra:  ${event.checkOutTime ?? 'Chưa điểm danh'}',
+              style: const TextStyle(fontSize: 14, color: Colors.black87),
+            ),
+          ],
         ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -186,15 +328,10 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
             Text(
               status,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 20,
                 color: statusColor,
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            const SizedBox(height: 5),
-            Text(
-              event.time.isNotEmpty ? event.time : '',
-              style: const TextStyle(fontSize: 14, color: Colors.black54),
             ),
           ],
         ),
@@ -204,19 +341,36 @@ class _CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
 }
 
 class Event {
-  final String name;
-  final String dateStart;
-  final String dateEnd;
+  final String eventId;
+  String? name;
+  final String registrationDate;
+  final String qrCode;
   final bool checkInStatus;
+  final String? checkInTime;
   final bool checkOutStatus;
-  final String time;
+  final String? checkOutTime;
 
   Event({
-    required this.name,
-    required this.dateStart,
-    required this.dateEnd,
+    required this.eventId,
+    this.name,
+    required this.registrationDate,
+    required this.qrCode,
     required this.checkInStatus,
+    this.checkInTime,
     required this.checkOutStatus,
-    required this.time,
+    this.checkOutTime,
   });
+
+  factory Event.fromJson(Map<String, dynamic> json) {
+    return Event(
+      eventId: json['eventId'],
+      name: json['name'],
+      registrationDate: json['registrationDate'],
+      qrCode: json['qrCode'],
+      checkInStatus: json['checkInStatus'],
+      checkInTime: json['checkInTime'],
+      checkOutStatus: json['checkOutStatus'],
+      checkOutTime: json['checkOutTime'],
+    );
+  }
 }

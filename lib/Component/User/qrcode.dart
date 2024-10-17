@@ -15,8 +15,6 @@ class QRCodePage extends StatefulWidget {
 
 class QRCodePageState extends State<QRCodePage> {
   String? _qrCode;
-  bool _checkInStatus = false;
-  bool _checkOutStatus = false;
 
   @override
   void initState() {
@@ -38,15 +36,15 @@ class QRCodePageState extends State<QRCodePage> {
       if (jsonResponse['code'] == 1000) {
         setState(() {
           _qrCode = jsonResponse['result']['eventsRegistered'][0]['qrCode'];
-          _checkInStatus = jsonResponse['result']['eventsRegistered'][0]['checkInStatus'];
-          _checkOutStatus = jsonResponse['result']['eventsRegistered'][0]['checkOutStatus'];
         });
       } else {
+        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load QR code: ${jsonResponse['code']}')),
         );
       }
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load QR code: ${response.statusCode}')),
       );
@@ -57,10 +55,32 @@ class QRCodePageState extends State<QRCodePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('QR Code',
-            style: TextStyle(color: Colors.black, fontSize: 30, fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding theo tỷ lệ màn hình
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding tiêu đề theo chiều cao màn hình
+          ),
+          child: Text(
+            "QR Code",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07, // Điều chỉnh kích thước font theo tỷ lệ màn hình
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Điều chỉnh chiều cao AppBar theo màn hình
       ),
       body: Container(
         decoration: const BoxDecoration(

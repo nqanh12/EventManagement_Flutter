@@ -7,7 +7,8 @@ import 'package:doan/Component/User/change_password.dart';
 
 class SettingsScreen extends StatelessWidget {
   final String token;
-  const SettingsScreen({super.key, required this.token});
+  final String role;
+  const SettingsScreen({super.key, required this.token, required this.role});
 
   @override
   Widget build(BuildContext context) {
@@ -47,14 +48,14 @@ class SettingsScreen extends StatelessWidget {
                   context,
                   "Thay đổi mật khẩu",
                   Icons.lock,
-                  const ChangePasswordScreen()
+                   ChangePasswordScreen(token : token)
               ),
               const SizedBox(height: 20),
               _buildSettingsOption(
                   context,
                   "Cập nhật thông tin cá nhân",
                   Icons.person,
-                  UpdatePersonalScreen(token: token)
+                  UpdatePersonalScreen(token: token, role: role)
               ),
               const SizedBox(height: 20),
               _buildSettingsOption(

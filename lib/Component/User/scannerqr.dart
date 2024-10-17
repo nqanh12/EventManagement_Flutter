@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 
 class QRCodeScanScreen extends StatefulWidget {
-  const QRCodeScanScreen({super.key});
+  final String role;
+  final String token;
+  final String eventId;
+  const QRCodeScanScreen({super.key, required this.role, required this.token, required this.eventId});
 
   @override
   QRCodeScanScreenState createState() => QRCodeScanScreenState();
@@ -20,7 +23,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
   @override
   void initState() {
     super.initState();
-    requestCameraPermission(); // Yêu cầu quyền camera
+    requestCameraPermission(); // Request camera permission
   }
 
   Future<void> requestCameraPermission() async {
@@ -34,12 +37,32 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Quét QR Điểm danh',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Adjust padding based on screen ratio
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Adjust title padding based on screen height
+          ),
+          child: Text(
+            "Quét QR điểm Danh",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07, // Adjust font size based on screen ratio
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Adjust AppBar height based on screen
       ),
       extendBodyBehindAppBar: true,
       body: Stack(
@@ -63,8 +86,8 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               Expanded(
                 flex: 2,
                 child: Container(
-                  margin: const EdgeInsets.only(top: 80, right: 0,left: 0,bottom: 30),
-                  padding: const EdgeInsets.only(top:0),
+                  margin: const EdgeInsets.only(top: 80, right: 0, left: 0, bottom: 30),
+                  padding: const EdgeInsets.only(top: 0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -153,7 +176,6 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
           Positioned(
             bottom: 100,
             right: 20,
-
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -187,7 +209,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => EventParticipantsScreen()),
+                      builder: (context) => EventParticipantsScreen(token : widget.token, eventId: widget.eventId)),
                 );
               },
               icon: const Icon(Icons.list),
@@ -195,8 +217,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               style: ElevatedButton.styleFrom(
                 elevation: 10,
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 foregroundColor: const Color.fromARGB(255, 0, 92, 250),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -216,8 +237,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               style: ElevatedButton.styleFrom(
                 elevation: 10,
                 backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
                 foregroundColor: const Color.fromARGB(255, 0, 92, 250),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -234,9 +254,15 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
       setState(() {
-        // Dữ liệu giả định từ mã QR sau khi quét
-        studentInfo = 'MSSV: 123456, Tên: Nguyễn Văn A';
-        checkStatus = isCheckIn ? 'Checked In' : 'Checked Out'; // Update based on switch value
+        // Parse the scanned data
+        if (scanData.code != null) {
+          final studentId = scanData.code!.substring(9); // Remaining characters
+          studentInfo = 'MSSV: $studentId';
+          checkStatus = isCheckIn ? 'Checked In' : 'Checked Out'; // Update based on switch value
+        } else {
+          studentInfo = 'No QR code data' ;
+          checkStatus = null;
+        }
       });
     });
   }
