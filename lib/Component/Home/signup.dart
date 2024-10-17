@@ -32,16 +32,19 @@ class RegisterState extends State<Register> {
     // Call the register service
     final response = await _registerService.register(username, password);
     if (response != null) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng kí thành công')),
       );
       Navigator.push(
+        // ignore: use_build_context_synchronously
         context,
         MaterialPageRoute(
           builder: (context) => const Login(),
         ),
       );
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng kí thất bại hoặc tài khoản đã tồn tại')),
       );

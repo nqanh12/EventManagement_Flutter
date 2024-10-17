@@ -32,22 +32,22 @@ class LoginState extends State<Login> {
     final response = await _loginService.login(username, password);
 
     if (response != null && response.authenticated) {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Đăng nhập thành công. Vai trò: ${response.role}')),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Token: ${response.token}')),
       );
       // Navigate to different pages based on the role
       if (response.role.contains('ADMIN')) {
         Navigator.push(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(
-            builder: (context) => const AdminDashboardScreen(),
+            builder: (context) =>  AdminDashboardScreen(role: response.role, token: response.token),
           ),
         );
       } else if (response.role.contains('MANAGER')) {
         Navigator.push(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(
             builder: (context) => Home(role: response.role, token: response.token),
@@ -55,6 +55,7 @@ class LoginState extends State<Login> {
         );
       } else if (response.role.contains('USER')) {
         Navigator.push(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(
             builder: (context) => Home(role: response.role, token: response.token),
@@ -62,6 +63,7 @@ class LoginState extends State<Login> {
         );
       }
     } else {
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đăng nhập thất bại')),
       );

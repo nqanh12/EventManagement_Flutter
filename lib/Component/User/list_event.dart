@@ -1,10 +1,9 @@
-import 'package:doan/Component/Home/home.dart';
 import 'package:doan/Component/User/detail_event.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 class ListEvent extends StatefulWidget {
   final String role;
@@ -17,20 +16,28 @@ class ListEvent extends StatefulWidget {
 
 class EventListScreenState extends State<ListEvent> {
   List<dynamic> _events = [];
+  List<String> _registeredEventIds = [];
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
-  String _filter = 'Tất cả';
+  String _filter = 'Đang diễn ra';
+  Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     _fetchEvents();
+    _fetchRegisteredEvents();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _fetchEvents();
+      _fetchRegisteredEvents();
+    });
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
@@ -45,19 +52,41 @@ class EventListScreenState extends State<ListEvent> {
 
     if (response.statusCode == 200) {
       setState(() {
-        _events = json.decode(response.body)['result'];
+        _events = json.decode(utf8.decode(response.bodyBytes))['result'];
+        _events.sort((a, b) => DateTime.parse(b['dateStart']).compareTo(DateTime.parse(a['dateStart'])));
       });
     } else {
-      // Handle error
+      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load events: ${response.statusCode}')),
       );
     }
   }
 
+  Future<void> _fetchRegisteredEvents() async {
+    const String url = 'http://10.0.2.2:8080/api/users/getRegisteredEvents';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final List<dynamic> registeredEvents = json.decode(response.body)['result']['eventsRegistered'];
+      setState(() {
+        _registeredEventIds = registeredEvents.map((event) => event['eventId'].toString()).toList();
+      });
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load registered events: ${response.statusCode}')),
+      );
+    }
+  }
+
   void _onScroll() {
-    if (_scrollController.position.pixels ==
-        _scrollController.position.maxScrollExtent) {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
       _loadMoreEvents();
     }
   }
@@ -72,12 +101,12 @@ class EventListScreenState extends State<ListEvent> {
     });
   }
 
-  //Định dạng ngày tháng năm
   String _formatDateTime(String dateTime) {
     final DateTime parsedDate = DateTime.parse(dateTime);
     final DateFormat formatter = DateFormat('dd/MM/yyyy -- HH:mm a');
     return formatter.format(parsedDate);
   }
+
   void _onFilterChanged(String? value) {
     setState(() {
       _filter = value ?? 'Tất cả';
@@ -87,37 +116,35 @@ class EventListScreenState extends State<ListEvent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70.0), // Adjust the height as needed
-        child: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            padding: const EdgeInsets.only(top: 20), // Add vertical padding
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Home(role: widget.role, token: widget.token),
-                ),
-              );
-            },
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding theo tỷ lệ màn hình
           ),
-          title: const Padding(
-            padding: EdgeInsets.only(top: 20), // Add vertical padding
-            child: Text(
-              "Sự kiện",
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-              ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding tiêu đề theo chiều cao màn hình
+          ),
+          child: Text(
+            "Sự kiện",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07, // Điều chỉnh kích thước font theo tỷ lệ màn hình
+              fontWeight: FontWeight.bold,
             ),
           ),
-          centerTitle: true,
-          backgroundColor: const Color.fromARGB(255, 25, 117, 215),
-          elevation: 0,
         ),
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Điều chỉnh chiều cao AppBar theo màn hình
       ),
+
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: const BoxDecoration(
@@ -136,11 +163,21 @@ class EventListScreenState extends State<ListEvent> {
             children: [
               const SizedBox(height: 80),
               _buildSearchBar(),
-              const SizedBox(height: 20), // Added extra space below the search bar
+              const SizedBox(height: 20),
               _buildFilterOptions(),
-              const SizedBox(height: 20), // Added extra space below the filter options
+              const SizedBox(height: 20),
               Expanded(
-                child: _buildEventList(),
+                child: RefreshIndicator(
+                  onRefresh: _fetchEvents,
+                  child: _events.isEmpty
+                      ? const Center(
+                    child: Text(
+                      'Hiện tại không có sự kiện',
+                      style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                      : _buildEventList(),
+                ),
               ),
             ],
           ),
@@ -181,7 +218,7 @@ class EventListScreenState extends State<ListEvent> {
 
   Widget _buildFilterOptions() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Increased vertical padding for more space
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.9),
         borderRadius: BorderRadius.circular(30),
@@ -197,7 +234,7 @@ class EventListScreenState extends State<ListEvent> {
         borderRadius: BorderRadius.circular(20),
         value: _filter,
         onChanged: _onFilterChanged,
-        items: <String>['Tất cả', 'Sắp tới', 'Đã qua', 'Hôm nay']
+        items: <String>['Tất cả', 'Sắp tới', 'Đã qua', 'Đang diễn ra','Hôm nay']
             .map<DropdownMenuItem<String>>((String value) {
           return DropdownMenuItem<String>(
             value: value,
@@ -229,64 +266,92 @@ class EventListScreenState extends State<ListEvent> {
   }
 
   bool _applyFilter(dynamic event) {
+    final DateTime now = DateTime.now();
+    final DateTime eventStartDate = DateTime.parse(event['dateStart']);
+    final DateTime eventEndDate = DateTime.parse(event['dateEnd']);
+
     if (_filter == 'Sắp tới') {
-      return event['dateStart'].contains('Sắp tới');
+      return eventStartDate.isAfter(now);
+
     } else if (_filter == 'Đã qua') {
-      return event['dateStart'].contains('Đã qua');
+      return eventEndDate.isBefore(now);
+    } else if (_filter == 'Đang diễn ra') {
+      return now.isAfter(eventStartDate) && now.isBefore(eventEndDate);
     } else if (_filter == 'Hôm nay') {
-      return event['dateStart'].contains('Hôm nay');
+      return eventStartDate.year == now.year &&
+          eventStartDate.month == now.month &&
+          eventStartDate.day == now.day;
     }
     return true;
   }
 
   Widget _buildEventCard(dynamic event, int index) {
+    final bool isRegistered = _registeredEventIds.contains(event['eventId']);
+    final DateTime now = DateTime.now();
+    final DateTime eventEndDate = DateTime.parse(event['dateEnd']);
+    final bool isPastEvent = now.isAfter(eventEndDate);
+
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
-      margin: const EdgeInsets.symmetric(vertical: 12), // Added more margin for spacing between cards
-      color: Colors.white.withOpacity(0.9),
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      color: isPastEvent ? Colors.red.withOpacity(0.5) : (isRegistered ? Colors.greenAccent.withOpacity(0.5) : Colors.white.withOpacity(0.9)),
       elevation: 8,
       child: Padding(
-        padding: const EdgeInsets.all(20.0), // Added padding inside the card for more space between text and card edges
+        padding: const EdgeInsets.all(20.0),
         child: ListTile(
-          contentPadding: const EdgeInsets.all(5), // Reduced content padding for tighter layout
+          contentPadding: const EdgeInsets.all(5),
           title: Text(
             event['name'],
             style: const TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20), // Increased font size for title
+                color: Colors.black, fontWeight: FontWeight.bold, fontSize: 20),
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 5), // Added spacing between title and subtitle
+              Text(
+                "Số lượng: ${event['capacity']}",
+                style: const TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 5),
               Text(
                 "Ngày bắt đầu: ${_formatDateTime(event['dateStart'])} ",
+                style: const TextStyle(color: Colors.black54),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "Ngày kết thúc: ${_formatDateTime(event['dateEnd'])} ",
                 style: const TextStyle(color: Colors.black54),
               ),
             ],
           ),
           trailing: const Icon(Icons.arrow_forward_ios, color: Colors.black),
-          onTap: () {
+          onTap: isPastEvent ? null : () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => EventDetailsScreen(
-                  isRegistered: true,
+                  isRegistered: _registeredEventIds.contains(event['eventId']),
                   role: widget.role,
                   token: widget.token,
-                  eventID: event['eventID'],
+                  eventId: event['eventId'],
                   name: event['name'],
-                  dateStart: "Ngày bắt đầu: ${_formatDateTime(event['dateStart'])}",
-                  dateEnd: "Ngày kết thúc: ${_formatDateTime(event['dateEnd'])}",
-                  location:"Địa điểm: ${event['locationId']}",
+                  dateStart: event['dateStart'],
+                  dateEnd: event['dateEnd'],
+                  location: event['locationId'],
                   description: event['description'],
-                  checkInStatus: false, // Giả định mặc định là false
-                  checkOutStatus: false, // Giả định mặc định là false
-                  managerId: event['managerName'], // Giả định ID người quản lý
+                  managerId: event['managerName'],
+                  onUpdate: () {
+                    _fetchEvents();
+                    _fetchRegisteredEvents();
+                  },
                 ),
               ),
-            );
+            ).then((_) {
+              _fetchEvents(); // Reload data when returning from EventDetailsScreen
+              _fetchRegisteredEvents();
+            });
           },
         ),
       ),

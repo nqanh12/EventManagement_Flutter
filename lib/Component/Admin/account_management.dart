@@ -1,58 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class User {
   String userName;
-  String password;
-  String fullName;
-  String classId;
-  String email;
-  String phone;
-  String address;
+  String? password;
+  String? fullName;
+  String? classId;
+  String? email;
+  String? phone;
+  String? address;
   Set<String> roles;
 
   User({
     required this.userName,
-    required this.password,
-    required this.fullName,
-    required this.classId,
-
-    required this.email,
-    required this.phone,
-    required this.address,
+    this.password,
+    this.fullName,
+    this.classId,
+    this.email,
+    this.phone,
+    this.address,
     required this.roles,
   });
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      userName: json['userName'],
+      fullName: json['full_Name'],
+      classId: json['class_id'],
+      email: json['email'],
+      phone: json['phone'],
+      address: json['address'],
+      roles: json['roles'] != null ? Set<String>.from(json['roles']) : {},
+    );
+  }
 }
 
 class UserManagementScreen extends StatefulWidget {
-  const UserManagementScreen({super.key});
+  final String role;
+  final String token;
+  const UserManagementScreen({super.key, required this.role, required this.token});
+
+  @override
   UserManagementScreenState createState() => UserManagementScreenState();
 }
 
 class UserManagementScreenState extends State<UserManagementScreen> {
-  List<User> users = [
-    User(
-      userName: 'nguyenvana',
-      password: 'password123',
-      fullName: 'Nguyen Van A',
-      classId: 'Class1',
-      email: 'nguyenvana@example.com',
-      phone: '123456789',
-      address: '123 Main St',
-      roles: {'Admin'},
-    ),
-    // Add more users here
-  ];
-
+  List<User> users = [];
   List<User> filteredUsers = [];
   TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    filteredUsers = users; // Initialize filtered list with all users
+    _fetchUsers();
+  }
+  Future<void> _updateUserRole(String userName, String newRole) async {
+    final String url = 'http://10.0.2.2:8080/api/users/updateRole/$userName';
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({'role': newRole}),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      if (jsonResponse['code'] == 1000) {
+        // Update the user list with the new role
+        setState(() {
+          final updatedUser = User.fromJson(jsonResponse['result']);
+          final index = users.indexWhere((user) => user.userName == userName);
+          if (index != -1) {
+            users[index] = updatedUser;
+            filteredUsers = users;
+          }
+        });
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật thành công')),
+        );
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update user role: ${jsonResponse['code']}')),
+        );
+      }
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Cập nhật thất bại: ${response.statusCode}')),
+      );
+    }
   }
 
-  // Function to filter users by name or role
+  Future<void> _fetchUsers() async {
+    const String url = 'http://10.0.2.2:8080/api/users/listUsers';
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(utf8.decode(response.bodyBytes));
+      if (jsonResponse['code'] == 1000) {
+        setState(() {
+          users = (jsonResponse['result'] as List)
+              .map((data) => User.fromJson(data))
+              .toList();
+          filteredUsers = users;
+        });
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load users: ${jsonResponse['code']}')),
+        );
+      }
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load users: ${response.statusCode}')),
+      );
+    }
+  }
+
   void _filterUsers(String query) {
     setState(() {
       if (query.isEmpty) {
@@ -60,14 +135,13 @@ class UserManagementScreenState extends State<UserManagementScreen> {
       } else {
         filteredUsers = users.where((user) {
           final lowerCaseQuery = query.toLowerCase();
-          return user.fullName.toLowerCase().contains(lowerCaseQuery) ||
+          return user.fullName?.toLowerCase().contains(lowerCaseQuery) ?? false ||
               user.roles.any((role) => role.toLowerCase().contains(lowerCaseQuery));
         }).toList();
       }
     });
   }
 
-  // Function to handle adding or editing users
   void _showUserForm({User? user}) {
     final isEditing = user != null;
     final userNameController = TextEditingController(text: isEditing ? user.userName : '');
@@ -97,7 +171,7 @@ class UserManagementScreenState extends State<UserManagementScreen> {
                     filled: true,
                     fillColor: Colors.white.withOpacity(0.9),
                   ),
-                  items: ['USER', 'MANAGER'].map((role) {
+                  items: ['USER', 'MANAGER', 'ADMIN'].map((role) {
                     return DropdownMenuItem<String>(
                       value: role,
                       child: Text(role),
@@ -108,7 +182,7 @@ class UserManagementScreenState extends State<UserManagementScreen> {
                       selectedRole = value!;
                     });
                   },
-                ),
+                )
               ],
             ),
           ),
@@ -119,12 +193,10 @@ class UserManagementScreenState extends State<UserManagementScreen> {
             ),
             ElevatedButton(
               onPressed: () {
-                setState(() {
-                  if (isEditing) {
-                    user.userName = userNameController.text;
-                    user.password = passwordController.text;
-                    user.roles = {selectedRole};
-                  } else {
+                if (isEditing) {
+                  _updateUserRole(user.userName, selectedRole);
+                } else {
+                  setState(() {
                     users.add(User(
                       userName: userNameController.text,
                       password: passwordController.text,
@@ -135,9 +207,9 @@ class UserManagementScreenState extends State<UserManagementScreen> {
                       address: '',
                       roles: {selectedRole},
                     ));
-                  }
-                  filteredUsers = users; // Reset filtered list after adding or editing
-                });
+                    filteredUsers = users; // Reset filtered list after adding or editing
+                  });
+                }
                 Navigator.pop(context);
               },
               child: Text(isEditing ? "Sửa" : "Thêm"),
@@ -160,7 +232,6 @@ class UserManagementScreenState extends State<UserManagementScreen> {
         fillColor: Colors.white.withOpacity(0.9),
       ),
     );
-
   }
 
   @override
@@ -198,38 +269,41 @@ class UserManagementScreenState extends State<UserManagementScreen> {
               ),
               const SizedBox(height: 20),
               Expanded(
-                child: ListView.builder(
-                  itemCount: filteredUsers.length,
-                  itemBuilder: (context, index) {
-                    final user = filteredUsers[index];
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 10,
-                      margin: const EdgeInsets.only(bottom: 20), // Thêm margin-bottom
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: const Color.fromARGB(255, 25, 117, 215),
-                          child: Text(
-                            user.fullName[0],
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                child: RefreshIndicator(
+                  onRefresh: _fetchUsers, // Pull-to-refresh functionality
+                  child: ListView.builder(
+                    itemCount: filteredUsers.length,
+                    itemBuilder: (context, index) {
+                      final user = filteredUsers[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        elevation: 10,
+                        margin: const EdgeInsets.only(bottom: 20), // Thêm margin-bottom
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+                            child: Text(
+                              user.fullName?.isNotEmpty == true ? user.fullName![0] : '',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          title: Text(user.fullName ?? '', style: const TextStyle(fontWeight: FontWeight.bold,fontFamily: 'Roboto')),
+                          subtitle: Text(user.email ?? ''),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.orange),
+                                onPressed: () => _showUserForm(user: user),
+                              ),
+                            ],
                           ),
                         ),
-                        title: Text(user.fullName, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text(user.email),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.orange),
-                              onPressed: () => _showUserForm(user: user),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ],

@@ -1,9 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter/services.dart';
 
 class EditPersonalInfoScreen extends StatefulWidget {
   final String role;
-
-  const EditPersonalInfoScreen({super.key, required this.role});
+  final String token;
+  final String fullName;
+  final String gender;
+  final String phone;
+  final String classID;
+  final String email;
+  final String address;
+  const EditPersonalInfoScreen({
+    super.key,
+    required this.role,
+    required this.token,
+    required this.fullName,
+    required this.gender,
+    required this.phone,
+    required this.classID,
+    required this.email,
+    required this.address,
+  });
 
   @override
   EditPersonalInfoScreenState createState() => EditPersonalInfoScreenState();
@@ -11,36 +30,92 @@ class EditPersonalInfoScreen extends StatefulWidget {
 
 class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _genderController = TextEditingController();
-  final TextEditingController _dobController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _classController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  String? _selectedGender;
 
   @override
   void initState() {
     super.initState();
-    // Prepopulate the controllers with default data (this data can come from a model or API call)
-    _nameController.text = "Nguyễn Quốc Anh";
-    _genderController.text = "Nam";
-    _dobController.text = "12/05/2003";
-    _phoneController.text = "+84 98 728 46 71";
-    _classController.text = "12DHTH06";
-    _emailController.text = "chaybon@gmail.com";
-    _addressController.text = "566/197/25 Nguyễn Thái Sơn";
+    // Prepopulate the controllers with data from the widget
+    _nameController.text = widget.fullName;
+    _selectedGender = widget.gender;
+    _phoneController.text = widget.phone;
+    _classController.text = widget.classID;
+    _emailController.text = widget.email;
+    _addressController.text = widget.address;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _genderController.dispose();
-    _dobController.dispose();
     _phoneController.dispose();
     _classController.dispose();
     _emailController.dispose();
     _addressController.dispose();
     super.dispose();
+  }
+
+  bool _isValidEmail(String email) {
+    final RegExp regex = RegExp(r'^[^@]+@gmail\.com$');
+    return regex.hasMatch(email);
+  }
+
+  Future<void> _updateUserInfo() async {
+    if (!_isValidEmail(_emailController.text)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Email không hợp lệ')),
+      );
+      return;
+    }
+
+    if (_phoneController.text.length <= 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Số điện thoại phải lớn hơn 8 ký tự')),
+      );
+      return;
+    }
+
+    const String url = 'http://10.0.2.2:8080/api/users/updateInfo';
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'full_Name': _nameController.text,
+        'gender': _selectedGender,
+        'class_id': _classController.text,
+        'email': _emailController.text,
+        'phone': _phoneController.text,
+        'address': _addressController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse['code'] == 1000) {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cập nhật thông tin thành công')),
+        );
+        // ignore: use_build_context_synchronously
+        Navigator.pop(context, true); // Return true to indicate success
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update user info: ${jsonResponse['message']}')),
+        );
+      }
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update user info: ${response.statusCode}')),
+      );
+    }
   }
 
   @override
@@ -75,7 +150,7 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
           children: [
             Positioned.fill(
               child: Image.asset(
-                'assets/background.jpg', // Replace with your image asset path
+                'assets/background.png', // Replace with your image asset path
                 fit: BoxFit.cover,
               ),
             ),
@@ -99,7 +174,7 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                   const CircleAvatar(
                     radius: 40,
                     backgroundImage:
-                    AssetImage('assets/avatar.jpg'), // Replace with avatar
+                    AssetImage('assets/avatar.png'), // Replace with avatar
                   ),
                   const SizedBox(height: 20),
                   Expanded(
@@ -118,20 +193,15 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildInputField("Họ và tên", _nameController, false),
-                            _buildInputField("Giới tính", _genderController, false),
-                            _buildInputField("Ngày sinh", _dobController, false),
-                            _buildInputField("Điện thoại", _phoneController, false),
+                            _buildGenderField(),
+                            _buildInputField("Điện thoại", _phoneController, false, TextInputType.number, [FilteringTextInputFormatter.digitsOnly]),
                             _buildInputField("Lớp", _classController, false),
                             _buildInputField("Email", _emailController, false),
                             _buildInputField("Địa chỉ", _addressController, false),
                             const SizedBox(height: 20),
                             Center(
                               child: ElevatedButton(
-                                onPressed: () {
-                                  // Handle update logic
-                                  // For example, you can call an API to update the user information
-                                  // and then show a success message or navigate back
-                                },
+                                onPressed: _updateUserInfo,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.blue,
                                   padding: const EdgeInsets.symmetric(
@@ -161,12 +231,14 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, bool obscureText) {
+  Widget _buildInputField(String label, TextEditingController controller, bool obscureText, [TextInputType keyboardType = TextInputType.text, List<TextInputFormatter>? inputFormatters]) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: TextField(
         controller: controller,
         obscureText: obscureText,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style: const TextStyle(fontSize: 16),
         decoration: InputDecoration(
           labelText: label,
@@ -178,6 +250,45 @@ class EditPersonalInfoScreenState extends State<EditPersonalInfoScreen> {
             borderSide: BorderSide.none,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGenderField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Giới tính",
+            style: TextStyle(fontSize: 16, color: Colors.black54),
+          ),
+          Row(
+            children: [
+              Radio<String>(
+                value: "Nam",
+                groupValue: _selectedGender,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedGender = value;
+                  });
+                },
+              ),
+              const Text("Nam"),
+              Radio<String>(
+                value: "Nữ",
+                groupValue: _selectedGender,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedGender = value;
+                  });
+                },
+              ),
+              const Text("Nữ"),
+            ],
+          ),
+        ],
       ),
     );
   }

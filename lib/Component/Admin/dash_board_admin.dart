@@ -5,7 +5,9 @@ import 'package:doan/Component/Home/login.dart';
 import 'package:flutter/material.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
-  const AdminDashboardScreen({super.key});
+  final String role;
+  final String token;
+  const AdminDashboardScreen({super.key, required this.role, required this.token});
 
   @override
   AdminDashboardScreenState createState() => AdminDashboardScreenState();
@@ -13,14 +15,6 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _selectedIndex = 0; // Track the selected tab
-
-  // Different screens corresponding to each tab in the bottom navigation bar
-  static final List<Widget> _widgetOptions = <Widget>[
-    const UserManagementScreen(), // Manage Users
-    const EventManagementScreen(), // Manage Events
-    const EventListManagementScreen(), // Manage Participants
-    const ExportReportScreen(), // Export Report
-  ];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -72,6 +66,14 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> widgetOptions = <Widget>[
+      UserManagementScreen(role: widget.role, token: widget.token), // Manage Users
+      EventManagementScreen(role: widget.role, token: widget.token), // Manage Events
+      EventListManagementScreen(role: widget.role, token: widget.token
+      ), // Manage Participants
+      const ExportReportScreen(), // Export Report
+    ];
+
     return Scaffold(
       appBar: AppBar(
         elevation: 10,
@@ -100,7 +102,7 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: _widgetOptions[_selectedIndex], // Display the selected screen
+        child: widgetOptions[_selectedIndex], // Display the selected screen
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

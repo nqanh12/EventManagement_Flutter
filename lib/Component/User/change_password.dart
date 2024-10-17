@@ -1,7 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class ChangePasswordScreen extends StatelessWidget {
-  const ChangePasswordScreen({super.key});
+class ChangePasswordScreen extends StatefulWidget {
+  final String token;
+
+  const ChangePasswordScreen({super.key, required this.token});
+
+  @override
+  ChangePasswordScreenState createState() => ChangePasswordScreenState();
+}
+
+class ChangePasswordScreenState extends State<ChangePasswordScreen> {
+  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmNewPasswordController = TextEditingController();
+  bool _obscureText = true;
+
+  Future<void> _changePassword() async {
+    final oldPassword = _currentPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmNewPassword = _confirmNewPasswordController.text;
+
+    if (newPassword != confirmNewPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mật khẩu mới và xác nhận mật khẩu không khớp')),
+      );
+      return;
+    }
+
+    final response = await http.put(
+      Uri.parse('http://10.0.2.2:8080/api/users/changePassword'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'oldPassword': oldPassword,
+        'newPassword': newPassword,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['code'] == 1000) {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đổi mật khẩu thành công')),
+        );
+      } else {
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Lỗi: ${data['message']}')),
+        );
+      }
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nhập sai mật khẩu')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -9,11 +68,12 @@ class ChangePasswordScreen extends StatelessWidget {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50.0),
         child: AppBar(
-        title: const Text("Đổi mật khẩu" ,style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold)),
-        centerTitle: true,
-        backgroundColor: const Color.fromARGB(255, 25, 117, 215),
-        elevation: 0,
-      ),),
+          title: const Text("Đổi mật khẩu", style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold)),
+          centerTitle: true,
+          backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+          elevation: 0,
+        ),
+      ),
       extendBodyBehindAppBar: true,
       body: Container(
         decoration: const BoxDecoration(
@@ -32,22 +92,19 @@ class ChangePasswordScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 120),
-              _buildPasswordField("currentPassword", "Mật khẩu hiện tại"),
+              _buildPasswordField(_currentPasswordController, "Mật khẩu hiện tại"),
               const SizedBox(height: 20),
-              _buildPasswordField("newPassword", "Mật khẩu mới"),
+              _buildPasswordField(_newPasswordController, "Mật khẩu mới"),
               const SizedBox(height: 20),
-              _buildPasswordField("confirmNewPassword", "Xác nhận mật khẩu mới"),
+              _buildPasswordField(_confirmNewPasswordController, "Xác nhận mật khẩu mới"),
               const SizedBox(height: 40),
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Handle password change logic here
-                  },
+                  onPressed: _changePassword,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 18, horizontal: 30),
+                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 30),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25),
                     ),
@@ -72,9 +129,9 @@ class ChangePasswordScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPasswordField(String fieldName, String label) {
+  Widget _buildPasswordField(TextEditingController controller, String label) {
     return TextField(
-      key: Key(fieldName), // Unique key for each field for BE integration
+      controller: controller,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
@@ -91,10 +148,20 @@ class ChangePasswordScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(25),
           borderSide: const BorderSide(color: Colors.white),
         ),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        suffixIcon: IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility : Icons.visibility_off,
+            color: Colors.black,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureText = !_obscureText;
+            });
+          },
+        ),
       ),
-      obscureText: true,
+      obscureText: _obscureText,
       style: const TextStyle(color: Colors.black),
       cursorColor: Colors.black,
     );
