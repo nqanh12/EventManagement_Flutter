@@ -10,6 +10,8 @@ class Student {
   final DateTime? checkInTime; // Thời gian check-in
   final bool checkOutStatus; // Trạng thái check-out
   final DateTime? checkOutTime; // Thời gian check-out
+  final String? userCheckIn; // Người check-in
+  final String? userCheckOut; // Người check-out
   String fullName;
   String className;
 
@@ -20,6 +22,8 @@ class Student {
     required this.checkInTime,
     required this.checkOutStatus,
     required this.checkOutTime,
+    this.userCheckIn,
+    this.userCheckOut,
     this.fullName = '',
     this.className = '',
   });
@@ -32,6 +36,8 @@ class Student {
       checkInTime: json['checkInTime'] != null ? DateTime.parse(json['checkInTime']) : null,
       checkOutStatus: json['checkOutStatus'] ?? false,
       checkOutTime: json['checkOutTime'] != null ? DateTime.parse(json['checkOutTime']) : null,
+      userCheckIn: json['userCheckIn'],
+      userCheckOut: json['userCheckOut'],
       className: json['class_id'] ?? 'Chưa cập nhật',
       fullName: json['full_Name'] ?? 'Chưa cập nhật',
     );
@@ -51,6 +57,7 @@ class ParticipantListScreen extends StatefulWidget {
 
 class ParticipantListScreenState extends State<ParticipantListScreen> {
   List<Student> participants = [];
+  String filter = 'Tất cả';
 
   @override
   void initState() {
@@ -166,16 +173,60 @@ class ParticipantListScreenState extends State<ParticipantListScreen> {
     };
   }
 
+  List<Student> _filterParticipants() {
+    if (filter == 'Tất cả') {
+      return participants;
+    } else if (filter == 'Hoàn thành') {
+      return participants.where((student) => student.checkInStatus && student.checkOutStatus).toList();
+    } else if (filter == 'Đang check') {
+      return participants.where((student) => student.checkInStatus || student.checkOutStatus).toList();
+    } else {
+      return participants.where((student) => !student.checkInStatus && !student.checkOutStatus).toList();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final counts = _countParticipants();
     final dateFormat = DateFormat('dd-MM-yyyy HH:mm');
+    final filteredParticipants = _filterParticipants();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Danh sách sinh viên đăng ký', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding theo tỷ lệ màn hình
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding tiêu đề theo chiều cao màn hình
+          ),
+          child: Text(
+            "Danh sách sinh viên",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07, // Điều chỉnh kích thước font theo tỷ lệ màn hình
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Điều chỉnh chiều cao AppBar theo màn hình
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.safety_check),
+            onPressed: () {
+              // Handle the icon press
+            },
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -222,6 +273,22 @@ class ParticipantListScreenState extends State<ParticipantListScreen> {
                         ),
                       ],
                     ),
+                    const Spacer(),
+                    DropdownButton<String>(
+                      value: filter,
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          filter = newValue!;
+                        });
+                      },
+                      items: <String>['Tất cả', 'Hoàn thành', 'Đang check', 'Chưa hoàn thành']
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
                   ],
                 ),
               ),
@@ -229,7 +296,7 @@ class ParticipantListScreenState extends State<ParticipantListScreen> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _fetchParticipants, // Pull-to-refresh functionality
-                child: participants.isEmpty
+                child: filteredParticipants.isEmpty
                     ? const Center(
                   child: Text(
                     'Chưa có sinh viên đăng ký',
@@ -237,9 +304,9 @@ class ParticipantListScreenState extends State<ParticipantListScreen> {
                   ),
                 )
                     : ListView.builder(
-                  itemCount: participants.length,
+                  itemCount: filteredParticipants.length,
                   itemBuilder: (context, index) {
-                    var student = participants[index];
+                    var student = filteredParticipants[index];
                     return Dismissible(
                       key: Key(student.userName),
                       background: Container(
@@ -263,29 +330,32 @@ class ParticipantListScreenState extends State<ParticipantListScreen> {
                         child: ListTile(
                           title: Text(student.fullName, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                           subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text('Check-in:   '),
-                                    student.checkInStatus
-                                        ? const Icon(Icons.check_circle, color: Colors.green)
-                                        : const Icon(Icons.cancel_presentation, color: Colors.red),
-                                  ],
-                                ),
-                                Text('Giờ vào: ${student.checkInTime != null ? dateFormat.format(student.checkInTime!) : 'Chưa điểm danh'}'),
-                                Row(
-                                  children: [
-                                    const Text('Check-out: '),
-                                    student.checkOutStatus
-                                        ? const Icon(Icons.check_circle, color: Colors.green)
-                                        : const Icon(Icons.cancel_presentation, color: Colors.red),
-                                  ],
-                                ),
-                                Text('Giờ ra: ${student.checkOutTime != null ? dateFormat.format(student.checkOutTime!) : 'Chưa điểm danh'}'),
-                                Text('MSSV: ${student.userName}'),
-                                Text('Lớp: ${student.className}'),
-                              ]),
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text('Check-in:   '),
+                                  student.checkInStatus
+                                      ? const Icon(Icons.check_circle, color: Colors.green)
+                                      : const Icon(Icons.cancel_presentation, color: Colors.red),
+                                ],
+                              ),
+                              Text('Giờ vào: ${student.checkInTime != null ? dateFormat.format(student.checkInTime!) : 'Chưa điểm danh'}'),
+                              Text('Người check in: ${student.userCheckIn ?? 'Chưa điểm danh'}'),
+                              Row(
+                                children: [
+                                  const Text('Check-out: '),
+                                  student.checkOutStatus
+                                      ? const Icon(Icons.check_circle, color: Colors.green)
+                                      : const Icon(Icons.cancel_presentation, color: Colors.red),
+                                ],
+                              ),
+                              Text('Giờ ra: ${student.checkOutTime != null ? dateFormat.format(student.checkOutTime!) : 'Chưa điểm danh'}'),
+                              Text('Người check out: ${student.userCheckOut ?? 'Chưa điểm danh'}'),
+                              Text('MSSV: ${student.userName}'),
+                              Text('Lớp: ${student.className}'),
+                            ],
+                          ),
                           trailing: Text(
                             _getRegistrationStatus(student),
                             style: TextStyle(

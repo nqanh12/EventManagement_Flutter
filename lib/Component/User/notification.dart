@@ -1,46 +1,87 @@
 import 'package:flutter/material.dart';
+import 'package:doan/API/api_notification.dart';
+import 'package:intl/intl.dart';
 
-class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+class NotificationsPage extends StatefulWidget {
+  final String token;
+  const NotificationsPage({super.key, required this.token});
 
   @override
   NotificationsScreenState createState() => NotificationsScreenState();
 }
 
-class NotificationsScreenState extends State<NotificationsScreen> {
-  List<NotificationItem> notifications = [
-    NotificationItem(
-        title: "Sự kiện A đã bắt đầu",
-        isRead: false,
-        timestamp: "10:30 AM, 30/08/2024"),
-    NotificationItem(
-        title: "Cập nhật hệ thống mới",
-        isRead: true,
-        timestamp: "09:15 AM, 29/08/2024"),
-    NotificationItem(
-        title: "Sự kiện B đã kết thúc",
-        isRead: false,
-        timestamp: "08:00 AM, 28/08/2024"),
-  ];
+class NotificationsScreenState extends State<NotificationsPage> {
+  late NotificationService notificationService;
+  List<NotificationItem> notifications = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    notificationService = NotificationService(widget.token);
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    try {
+      final fetchedNotifications = await notificationService.fetchNotifications();
+      setState(() {
+        notifications = fetchedNotifications;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load notifications: $e')),
+      );
+    }
+  }
+
+  Future<void> _markNotificationAllAsRead() async {
+    try {
+      await notificationService.markAllAsRead();
+      setState(() {
+        for (var notification in notifications) {
+          notification.isRead = true;
+        }
+      });
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark all notifications as read: $e')),
+      );
+    }
+  }
+
+  Future<void> _markNotificationAsRead(String notificationId) async {
+    try {
+      await notificationService.markAsRead(notificationId);
+      setState(() {
+        notifications.firstWhere((notification) => notification.notificationId == notificationId).isRead = true;
+      });
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark notification as read: $e')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Thông báo",style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text("Thông báo", style: TextStyle(fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.blueAccent,
         elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.mark_email_read),
-            onPressed: () {
-              setState(() {
-                for (var notification in notifications) {
-                  notification.isRead = true;
-                }
-              });
-            },
+            onPressed: _markNotificationAllAsRead,
           ),
         ],
       ),
@@ -52,7 +93,9 @@ class NotificationsScreenState extends State<NotificationsScreen> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: ListView.builder(
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : ListView.builder(
           padding: const EdgeInsets.only(top: 16),
           itemCount: notifications.length,
           itemBuilder: (context, index) {
@@ -91,7 +134,7 @@ class NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                     ),
                     title: Text(
-                      notifications[index].title,
+                      notifications[index].message,
                       style: TextStyle(
                         fontWeight: notifications[index].isRead
                             ? FontWeight.normal
@@ -100,15 +143,13 @@ class NotificationsScreenState extends State<NotificationsScreen> {
                       ),
                     ),
                     subtitle: Text(
-                      notifications[index].timestamp,
+                      _formatDateTime(notifications[index].createDate),
                       style: const TextStyle(color: Colors.black54),
                     ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) {
                         if (value == 'Đánh dấu là đã đọc') {
-                          setState(() {
-                            notifications[index].isRead = true;
-                          });
+                          _markNotificationAsRead(notifications[index].notificationId);
                         } else if (value == 'Xoá thông báo') {
                           setState(() {
                             notifications.removeAt(index);
@@ -134,13 +175,10 @@ class NotificationsScreenState extends State<NotificationsScreen> {
       ),
     );
   }
-}
 
-class NotificationItem {
-  String title;
-  bool isRead;
-  String timestamp;
-
-  NotificationItem(
-      {required this.title, required this.isRead, required this.timestamp});
+  String _formatDateTime(String dateTime) {
+    final DateTime parsedDate = DateTime.parse(dateTime);
+    final DateFormat formatter = DateFormat('dd/MM/yyyy - HH:mm a');
+    return formatter.format(parsedDate);
+  }
 }

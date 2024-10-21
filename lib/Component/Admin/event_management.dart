@@ -216,6 +216,7 @@ class EventManagementScreenState extends State<EventManagementScreen> {
                           managerId: managerNameController.text, // Replace with the actual manager ID
                         );
                         _createEvent(newEvent);
+                        _sendNotification('Thông báo có : ${newEvent.name} sắp diễn ra'); // Send notification after creating a new event
                       }
                       Navigator.pop(context);
                     } else {
@@ -319,6 +320,12 @@ class EventManagementScreenState extends State<EventManagementScreen> {
         // ignore: use_build_context_synchronously
         context: context,
         initialTime: TimeOfDay.fromDateTime(initialDate ?? DateTime.now()),
+        builder: (BuildContext context, Widget? child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false), // Use 12-hour format
+            child: child!,
+          );
+        },
       );
 
       if (pickedTime != null) {
@@ -326,7 +333,7 @@ class EventManagementScreenState extends State<EventManagementScreen> {
           pickedDate.year,
           pickedDate.month,
           pickedDate.day,
-          pickedTime.hour,
+          pickedTime.hourOfPeriod + (pickedTime.period == DayPeriod.pm ? 12 : 0), // Convert to 24-hour format if PM
           pickedTime.minute,
         );
         onDateTimeSelected(selectedDateTime);
@@ -371,6 +378,43 @@ class EventManagementScreenState extends State<EventManagementScreen> {
         fillColor: Colors.white.withOpacity(0.9),
       ),
     );
+  }
+
+  Future<void> _sendNotification(String message) async {
+    const String url = 'http://10.0.2.2:8080/api/users/sendNotification';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+      body: json.encode({
+        'message': message,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['code'] == 1000) {
+        // Handle successful notification sending
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notification sent successfully')),
+        );
+      } else {
+        // Handle API error response
+        // ignore: use_build_context_synchronously
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send notification: ${data['message']}')),
+        );
+      }
+    } else {
+      // Handle HTTP error response
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send notification: ${response.statusCode}')),
+      );
+    }
   }
 
   Future<void> _deleteEvent(Event event) async {

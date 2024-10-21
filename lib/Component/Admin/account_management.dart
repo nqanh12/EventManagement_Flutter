@@ -289,8 +289,8 @@ class UserManagementScreenState extends State<UserManagementScreen> {
                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          title: Text(user.fullName ?? '', style: const TextStyle(fontWeight: FontWeight.bold,fontFamily: 'Roboto')),
-                          subtitle: Text(user.email ?? ''),
+                          title: Text(user.fullName ?? 'Chưa cập nhật', style: const TextStyle(fontWeight: FontWeight.bold,fontFamily: 'Roboto')),
+                          subtitle: Text(user.email ?? 'Chưa cập nhậtf'),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [

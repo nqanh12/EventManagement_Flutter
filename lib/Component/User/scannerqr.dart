@@ -2,12 +2,16 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:doan/Component/User/student_list_event.dart';
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class QRCodeScanScreen extends StatefulWidget {
   final String role;
   final String token;
   final String eventId;
-  const QRCodeScanScreen({super.key, required this.role, required this.token, required this.eventId});
+  final String dateStart;
+  final String dateEnd;
+  const QRCodeScanScreen({super.key, required this.role, required this.token, required this.eventId, required this.dateStart, required this.dateEnd});
 
   @override
   QRCodeScanScreenState createState() => QRCodeScanScreenState();
@@ -19,17 +23,95 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
   String? studentInfo;
   String? checkStatus;
   bool isCheckIn = true; // State to manage Check-In/Check-Out mode
+  bool isCheckInDisabled = false; // State to manage switch disable
+  List<dynamic> participants = [];
 
   @override
   void initState() {
     super.initState();
     requestCameraPermission(); // Request camera permission
+    _checkIfCheckInDisabled(); // Check if check-in should be disabled
+    _fetchParticipants(); // Fetch participants list
   }
 
   Future<void> requestCameraPermission() async {
     var status = await Permission.camera.status;
     if (!status.isGranted) {
       await Permission.camera.request();
+    }
+  }
+
+  void _checkIfCheckInDisabled() {
+    final dateStart = DateTime.parse(widget.dateStart);
+    final oneHourAfterStart = dateStart.add(const Duration(hours: 1));
+    final now = DateTime.now();
+
+    if (now.isAfter(oneHourAfterStart)) {
+      setState(() {
+        isCheckInDisabled = true;
+        isCheckIn = false; // Ensure the switch is off
+      });
+    }
+  }
+
+  Future<void> _fetchParticipants() async {
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:8080/api/events/participants/${widget.eventId}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      setState(() {
+        participants = data['result']['participants'];
+      });
+    } else {
+      // Handle error
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load participants: ${response.statusCode}')),
+      );
+    }
+  }
+
+  Future<void> _checkInOut(String userName) async {
+    final String checkInOut = isCheckIn ? 'checkIn' : 'checkOut';
+    final String userUrl = 'http://10.0.2.2:8080/api/users/$checkInOut/${widget.eventId}/$userName';
+    final String eventUrl = 'http://10.0.2.2:8080/api/events/$checkInOut/${widget.eventId}/$userName';
+
+    final userResponse = await http.put(
+      Uri.parse(userUrl),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    final eventResponse = await http.put(
+      Uri.parse(eventUrl),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (userResponse.statusCode == 200 && eventResponse.statusCode == 200) {
+      json.decode(userResponse.body);
+      // ignore: unused_local_variable
+      final eventData = json.decode(eventResponse.body);
+
+      setState(() {
+        checkStatus = isCheckIn ? 'Check In thành công' : 'Check Out thành công';
+        studentInfo = 'MSSV: $userName\nTrạng thái: $checkStatus';
+      });
+
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Thao tác thành công: $checkStatus')),
+      );
+    } else {
+      // ignore: avoid_print
+      print('Failed to check in/out: ${userResponse.statusCode}');
     }
   }
 
@@ -154,18 +236,6 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
                             ),
                           ),
                         ),
-                      if (checkStatus != null)
-                        Text(
-                          'Trạng thái: $checkStatus',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: checkStatus == 'Checked In'
-                                ? Colors.green
-                                : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
                     ],
                   ),
                 ),
@@ -174,7 +244,7 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
           ),
           // Refined Check-In / Check-Out switch at the top-right corner
           Positioned(
-            bottom: 100,
+            bottom: 20,
             right: 20,
             child: Container(
               decoration: BoxDecoration(
@@ -189,15 +259,27 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
                 ],
               ),
               padding: const EdgeInsets.all(8),
-              child: Switch(
-                value: isCheckIn,
-                onChanged: (value) {
-                  setState(() {
-                    isCheckIn = value;
-                  });
-                },
-                activeColor: Colors.green,
-                inactiveThumbColor: Colors.red,
+              child: Row(
+                children: [
+                  Switch(
+                    value: isCheckIn,
+                    onChanged: isCheckInDisabled ? null : (value) {
+                      setState(() {
+                        isCheckIn = value;
+                      });
+                    },
+                    activeColor: Colors.green,
+                    inactiveThumbColor: Colors.red,
+                  ),
+                  Text(
+                    isCheckIn ? 'Check In' : 'Check Out',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: isCheckIn ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -225,26 +307,6 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
               ),
             ),
           ),
-          Positioned(
-            bottom: 20,
-            right: 20,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                // Add functionality to load data
-              },
-              icon: const Icon(Icons.sync),
-              label: const Text('Đồng bộ'),
-              style: ElevatedButton.styleFrom(
-                elevation: 10,
-                backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 20),
-                foregroundColor: const Color.fromARGB(255, 0, 92, 250),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -252,18 +314,45 @@ class QRCodeScanScreenState extends State<QRCodeScanScreen> {
 
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
-    controller.scannedDataStream.listen((scanData) {
-      setState(() {
-        // Parse the scanned data
-        if (scanData.code != null) {
-          final studentId = scanData.code!.substring(9); // Remaining characters
-          studentInfo = 'MSSV: $studentId';
-          checkStatus = isCheckIn ? 'Checked In' : 'Checked Out'; // Update based on switch value
+    controller.scannedDataStream.listen((scanData) async {
+      if (scanData.code != null) {
+        final String scannedCode = scanData.code!;
+        final String eventCode = widget.eventId; // Assuming eventId is the event QR code
+
+        if (scannedCode.substring(0, 9) == eventCode) {
+          final studentId = scannedCode.substring(9); // Remaining characters
+          final participant = participants.firstWhere(
+                (participant) => participant['userName'] == studentId,
+            orElse: () => null,
+          );
+
+          if (participant != null) {
+            if (participant['checkOutStatus'] == true) {
+              setState(() {
+                studentInfo = 'MSSV: $studentId\nTrạng thái: Đã check out';
+                checkStatus = 'Checked Out';
+              });
+            } else {
+              await _checkInOut(studentId);
+            }
+          } else {
+            setState(() {
+              studentInfo = 'Sinh viên chưa đăng kí';
+              checkStatus = null;
+            });
+          }
         } else {
-          studentInfo = 'No QR code data' ;
-          checkStatus = null;
+          setState(() {
+            studentInfo = 'Không tìm thấy sinh viên';
+            checkStatus = null;
+          });
         }
-      });
+      } else {
+        setState(() {
+          studentInfo = 'No QR code data';
+          checkStatus = null;
+        });
+      }
     });
   }
 

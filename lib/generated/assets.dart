@@ -3,8 +3,10 @@ class Assets {
   Assets._();
 
   static const String aPIApiLogin = 'lib/API/api_login.dart';
+  static const String aPIApiNotification = 'lib/API/api_notification.dart';
   static const String aPIApiRegister = 'lib/API/api_register.dart';
   static const String aPIApiUser = 'lib/API/api_user.dart';
+  static const String aPIEvent = 'lib/API/Event.java~';
   static const String adminAccountManagement = 'lib/Component/Admin/account_management.dart';
   static const String adminDashBoardAdmin = 'lib/Component/Admin/dash_board_admin.dart';
   static const String adminEventListManagement = 'lib/Component/Admin/event_list_management.dart';
@@ -16,12 +18,17 @@ class Assets {
   static const String assetsBackground = 'assets/background.png';
   static const String assetsLogo = 'assets/logo.png';
   static const String assetsPerson = 'assets/person.png';
-  static const String componentAdminEventStatistics = 'lib/Component/Admin/event_statistics.dart~';
-  static const String componentUserListEvent = 'lib/Component/User/list_event.dart~';
+  static const String classEvent = 'lib/Class/event.dart';
+  static const String componentAdminDashBoardAdmin = 'lib/Component/Admin/dash_board_admin.dart~';
+  static const String componentHomeHome = 'lib/Component/Home/home.dart~';
+  static const String componentUserListEventCheck = 'lib/Component/User/list_event_check.dart~';
+  static const String componentUserUpdatePersonal = 'lib/Component/User/update_personal.dart~';
   static const String generatedAssets = 'lib/generated/assets.dart';
   static const String homeHome = 'lib/Component/Home/home.dart';
   static const String homeLogin = 'lib/Component/Home/login.dart';
   static const String homeSignup = 'lib/Component/Home/signup.dart';
+  static const String libFirebaseOptions = 'lib/firebase_options.dart';
+  static const String libGeneratedAssets = 'lib/generated/assets.dart~';
   static const String libMain = 'lib/main.dart';
   static const String userChangePassword = 'lib/Component/User/change_password.dart';
   static const String userDetailEvent = 'lib/Component/User/detail_event.dart';
