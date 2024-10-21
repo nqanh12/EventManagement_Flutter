@@ -32,13 +32,19 @@ class EventListScreenState extends State<ListEventCheck> {
 
     if (response.statusCode == 200) {
       final List<dynamic> allEvents = json.decode(utf8.decode(response.bodyBytes))['result'];
-      final DateTime now = DateTime.now();
 
       setState(() {
         _events = allEvents.where((event) {
-          final DateTime eventStart = DateTime.parse(event['dateStart']);
-          final DateTime eventEnd = DateTime.parse(event['dateEnd']);
-          return now.isAfter(eventStart) && now.isBefore(eventEnd);
+          final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
+          final DateTime eventStartDate = DateTime.parse(event['dateStart']);
+          final DateTime eventEndDate = DateTime.parse(event['dateEnd']);
+          final DateTime now = DateTime.now();
+
+          formatter.format(eventStartDate);
+          formatter.format(eventEndDate);
+
+          return
+              (eventStartDate.isBefore(now) && eventEndDate.isAfter(now));
         }).toList();
       });
     } else {
@@ -88,7 +94,7 @@ class EventListScreenState extends State<ListEventCheck> {
 
   String _formatDateTime(String dateTime) {
     final DateTime parsedDate = DateTime.parse(dateTime);
-    final DateFormat formatter = DateFormat('dd/MM/yyyy -- HH:mm a');
+    final DateFormat formatter = DateFormat('dd/MM/yyyy - HH:mm a');
     return formatter.format(parsedDate);
   }
 
@@ -99,7 +105,7 @@ class EventListScreenState extends State<ListEventCheck> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding theo tỷ lệ màn hình
+            top: MediaQuery.of(context).size.height * 0.00,
           ),
           onPressed: () {
             Navigator.pop(context);
@@ -107,7 +113,7 @@ class EventListScreenState extends State<ListEventCheck> {
         ),
         title: Padding(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding tiêu đề theo chiều cao màn hình
+            top: MediaQuery.of(context).size.height * 0.00,
           ),
           child: Text(
             "Điểm danh",
@@ -248,7 +254,7 @@ class EventListScreenState extends State<ListEventCheck> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => QRCodeScanScreen(token: widget.token, role: widget.role, eventId: event['eventId']),
+                builder: (context) => QRCodeScanScreen(token: widget.token, role: widget.role, eventId: event['eventId'],dateStart: event['dateStart'], dateEnd: event['dateEnd'],),
               ),
             ).then((_) {
               _fetchEvents(); // Reload data when returning from QRCodeScanScreen

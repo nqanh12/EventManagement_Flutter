@@ -76,9 +76,32 @@ class EventStatisticsScreenState extends State<EventStatisticsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blueAccent,
-        title: const Text('Thống kê', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding theo tỷ lệ màn hình
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).size.height * 0.00, // Điều chỉnh padding tiêu đề theo chiều cao màn hình
+          ),
+          child: Text(
+            "Thống kê",
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: MediaQuery.of(context).size.width * 0.07, // Điều chỉnh kích thước font theo tỷ lệ màn hình
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
         centerTitle: true,
+        backgroundColor: const Color.fromARGB(255, 25, 117, 215),
+        elevation: 0,
+        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Điều chỉnh chiều cao AppBar theo màn hình
       ),
       body: Container(
         decoration: const BoxDecoration(

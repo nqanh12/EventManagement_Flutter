@@ -103,7 +103,7 @@ class EventListScreenState extends State<ListEvent> {
 
   String _formatDateTime(String dateTime) {
     final DateTime parsedDate = DateTime.parse(dateTime);
-    final DateFormat formatter = DateFormat('dd/MM/yyyy -- HH:mm a');
+    final DateFormat formatter = DateFormat('dd/MM/yyyy - HH:mm a');
     return formatter.format(parsedDate);
   }
 
@@ -142,7 +142,7 @@ class EventListScreenState extends State<ListEvent> {
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 25, 117, 215),
         elevation: 0,
-        toolbarHeight: MediaQuery.of(context).size.height * 0.06, // Điều chỉnh chiều cao AppBar theo màn hình
+        toolbarHeight: MediaQuery.of(context).size.height * 0.05, // Điều chỉnh chiều cao AppBar theo màn hình
       ),
 
       extendBodyBehindAppBar: true,
@@ -272,15 +272,15 @@ class EventListScreenState extends State<ListEvent> {
 
     if (_filter == 'Sắp tới') {
       return eventStartDate.isAfter(now);
-
     } else if (_filter == 'Đã qua') {
       return eventEndDate.isBefore(now);
     } else if (_filter == 'Đang diễn ra') {
       return now.isAfter(eventStartDate) && now.isBefore(eventEndDate);
     } else if (_filter == 'Hôm nay') {
-      return eventStartDate.year == now.year &&
+      return (eventStartDate.year == now.year &&
           eventStartDate.month == now.month &&
-          eventStartDate.day == now.day;
+          eventStartDate.day == now.day) ||
+          (eventStartDate.isBefore(now) && eventEndDate.isAfter(now));
     }
     return true;
   }

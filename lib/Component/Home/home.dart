@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:doan/Component/User/detail_event.dart';
 import 'package:doan/Component/User/list_event_check.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +23,8 @@ class _HomeState extends State<Home> {
   Map<String, dynamic>? userInfo;
   List<dynamic> _upcomingEvents = [];
   Timer? _timer;
+  Timer? _timer2;
+
   @override
   void initState() {
     super.initState();
@@ -33,10 +34,15 @@ class _HomeState extends State<Home> {
       _fetchUserInfo();
       _fetchUpcomingEvents();
     });
+    _timer2 = Timer.periodic(const Duration(minutes: 30), (timer) {
+      _autoCalculateTrainingPoint();
+    });
   }
+
   @override
   void dispose() {
     _timer?.cancel();
+    _timer2?.cancel();
     super.dispose();
   }
 
@@ -72,9 +78,15 @@ class _HomeState extends State<Home> {
       final List<dynamic> allEvents = data['result'];
 
       // Filter events to include only upcoming events
+      final DateFormat dateFormat = DateFormat('dd-MM-yyyy HH:mm');
+      final DateTime now = DateTime.now().toLocal();
       final List<dynamic> upcomingEvents = allEvents.where((event) {
-        final DateTime eventStartDate = DateTime.parse(event['dateStart']);
-        return eventStartDate.isAfter(DateTime.now());
+        final DateTime eventStartDate = DateTime.parse(event['dateStart']).toLocal();
+        return now.isBefore(eventStartDate);
+      }).map((event) {
+        event['formattedDateStart'] = dateFormat.format(DateTime.parse(event['dateStart']).toLocal());
+        event['formattedDateEnd'] = dateFormat.format(DateTime.parse(event['dateEnd']).toLocal());
+        return event;
       }).toList();
 
       setState(() {
@@ -84,6 +96,26 @@ class _HomeState extends State<Home> {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load events: ${response.statusCode}')),
+      );
+    }
+  }
+
+  Future<void> _autoCalculateTrainingPoint() async {
+    final response = await http.put(
+      Uri.parse('http://10.0.2.2:8080/api/users/autoCalculateTrainingPoint'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(utf8.decode(response.bodyBytes));
+      // ignore: avoid_print
+      print('Training point calculated: ${data['result']['training_point']}');
+    } else {
+      // ignore: use_build_context_synchronously
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to calculate training point: ${response.statusCode}')),
       );
     }
   }
@@ -173,14 +205,14 @@ class _HomeState extends State<Home> {
                                       final event = _upcomingEvents[index];
                                       return _buildEventCard(
                                         event,
-                                        event['name'] ?? 'No name',
-                                        event['dateStart'] ?? '',
-                                        event['dateEnd'] ?? '',
-                                        event['locationId'] ?? 'No location',
-                                        event['description'] ?? 'No description',
+                                        event['name'] ?? 'Chưa cập nhật',
+                                        event['dateStart'] ?? 'Chưa cập nhật',
+                                        event['dateEnd'] ?? 'Chưa cập nhật',
+                                        event['locationId'] ?? 'Chưa cập nhật',
+                                        event['description'] ?? 'Chưa cập nhật',
                                         event['checkInStatus'] ?? false,
                                         event['checkOutStatus'] ?? false,
-                                        event['managerId'] ?? 'No manager',
+                                        event['managerId'] ?? 'Chưa cập nhật',
                                         event['isRegistered'] ?? false,
                                       );
                                     },
@@ -208,7 +240,7 @@ class _HomeState extends State<Home> {
                                     ],
                                     _buildQuickAccessButton("Trạng thái", Icons.history, CheckInOutStatusScreen(token: widget.token, role: widget.role)),
                                     const SizedBox(height: 16),
-                                    _buildQuickAccessButton("Thông báo", Icons.notifications, const NotificationsScreen()),
+                                    _buildQuickAccessButton("Thông báo", Icons.notifications, NotificationsPage(token: widget.token)),
                                     const SizedBox(height: 16),
                                     _buildQuickAccessButton(" Cài đặt", Icons.settings, SettingsScreen(token: widget.token, role: widget.role)),
                                   ],
@@ -230,7 +262,7 @@ class _HomeState extends State<Home> {
   }
 
   Widget _buildEventCard(dynamic event, String title, String dateStart, String dateEnd, String location, String description, bool checkInStatus, bool checkOutStatus, String managerId, bool isRegistered) {
-    final DateFormat dateFormat = DateFormat('dd-MM-yyyy HH:mm a'); // Define the date format
+    final DateFormat dateFormat = DateFormat('dd-MM-yyyy HH:mm'); // Define the date format
 
     return Card(
       shape: RoundedRectangleBorder(

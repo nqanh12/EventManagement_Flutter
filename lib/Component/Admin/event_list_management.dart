@@ -9,6 +9,7 @@ class EventList {
   String id;
   String eventId;
   String name;
+  int capacity;
   String description;
   String locationId; // ID of the location
   DateTime dateStart;
@@ -19,6 +20,7 @@ class EventList {
     required this.id,
     required this.eventId,
     required this.name,
+    required this.capacity,
     required this.description,
     required this.locationId,
     required this.dateStart,
@@ -31,6 +33,7 @@ class EventList {
       id: json['id'] ?? '',
       eventId: json['eventId'] ?? '',
       name: json['name'] ?? '',
+      capacity: json['capacity'] ?? 0,
       description: json['description'] ?? '',
       locationId: json['locationId'] ?? '',
       dateStart: DateTime.parse(json['dateStart'] ?? ' '),
@@ -202,6 +205,7 @@ class EventListManagementScreenState extends State<EventListManagementScreen> {
                             children: [
                               Text(event.description),
                               Text("Địa điểm: ${event.locationId}"),
+                              Text("Sức chứa: ${event.capacity}"),
                               Text("Bắt đầu: ${dateFormat.format(event.dateStart)}"),
                               Text("Kết thúc: ${dateFormat.format(event.dateEnd)}"),
                             ],

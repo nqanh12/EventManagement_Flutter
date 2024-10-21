@@ -150,7 +150,7 @@ class UpdatePersonalScreenState extends State<UpdatePersonalScreen> {
                           _buildInfoRow("Lớp", userInfo?['class_id'] ?? 'Chưa bổ sung'),
                           _buildInfoRow("Email", userInfo?['email'] ?? 'Chưa bổ sung'),
                           _buildInfoRow("Địa chỉ", userInfo?['address'] ?? 'Chưa bổ sung'),
-                          _buildInfoRow("Điểm rèn luyện", userInfo?['training_point'] ?? '0'),
+                          _buildInfoRow("Điểm rèn luyện", (userInfo?['training_point'] ?? 0).toString()),
                           const SizedBox(height: 20),
                           // Edit Button
                           Center(

@@ -69,9 +69,7 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final List<Widget> widgetOptions = <Widget>[
       UserManagementScreen(role: widget.role, token: widget.token), // Manage Users
       EventManagementScreen(role: widget.role, token: widget.token), // Manage Events
-      EventListManagementScreen(role: widget.role, token: widget.token
-      ), // Manage Participants
-      const ExportReportScreen(), // Export Report
+      EventListManagementScreen(role: widget.role, token: widget.token), // Manage Participants
     ];
 
     return Scaffold(
@@ -89,7 +87,7 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
         ),
         centerTitle: true,
-        backgroundColor: Colors.blueAccent,
+        backgroundColor: const Color.fromARGB(255, 25, 117, 215),
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -118,10 +116,6 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
             icon: Icon(Icons.people),
             label: 'Danh Sách',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.report),
-            label: 'Xuất Báo Cáo',
-          ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue[700],
@@ -130,30 +124,6 @@ class AdminDashboardScreenState extends State<AdminDashboardScreen> {
         type: BottomNavigationBarType.fixed, // Ensures the bar does not shift
         backgroundColor: Colors.white,
       ),
-    );
-  }
-}
-
-// Example ParticipantListScreen, ExportReportScreen
-// You can replace these with your actual widget implementations
-
-class ExportReportScreen extends StatelessWidget {
-  const ExportReportScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color.fromARGB(255, 197, 216, 236),
-            Color.fromARGB(255, 25, 117, 215),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: const Center(child: Text('Export Report Screen')),
     );
   }
 }

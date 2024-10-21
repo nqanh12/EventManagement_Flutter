@@ -1,5 +1,5 @@
 import 'package:doan/Component/Home/login.dart';
-import 'package:doan/Component/User/language_setting.dart';
+// import 'package:doan/Component/User/language_setting.dart';
 import 'package:doan/Component/User/notification_setting.dart';
 import 'package:doan/Component/User/update_personal.dart';
 import 'package:flutter/material.dart';
@@ -57,13 +57,13 @@ class SettingsScreen extends StatelessWidget {
                   Icons.person,
                   UpdatePersonalScreen(token: token, role: role)
               ),
-              const SizedBox(height: 20),
-              _buildSettingsOption(
-                  context,
-                  "Cài đặt ngôn ngữ",
-                  Icons.language,
-                  const LanguageSettingsScreen()
-              ),
+              // const SizedBox(height: 20),
+              // _buildSettingsOption(
+              //     context,
+              //     "Cài đặt ngôn ngữ",
+              //     Icons.language,
+              //     const LanguageSettingsScreen()
+              // ),
               const SizedBox(height: 20),
               _buildSettingsOption(
                   context,

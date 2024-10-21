@@ -34,7 +34,7 @@ class LoginState extends State<Login> {
     if (response != null && response.authenticated) {
       // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đăng nhập thành công. Vai trò: ${response.role}')),
+         const SnackBar(content: Text('Đăng nhập thành công.')),
       );
       // Navigate to different pages based on the role
       if (response.role.contains('ADMIN')) {

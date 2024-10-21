@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:intl/intl.dart';
+
 class CheckInOutStatusScreen extends StatefulWidget {
   final String token;
   final String role;
@@ -228,13 +230,13 @@ class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
       statusColor = Colors.green;
       statusIcon = Icons.check_circle_outline;
     } else if (event.checkInStatus) {
-      status = 'Còn thiếu check out';
+      status = 'Chưa check out';
       statusColor = Colors.orange;
       statusIcon = Icons.warning_amber;
     } else if (event.checkOutStatus) {
-      status = 'Còn thiếu check in';
+      status = 'Chưa check in';
       statusColor = Colors.orange;
-      statusIcon = Icons.logout;
+      statusIcon = Icons.warning_amber;
     } else if (DateTime.now().isAfter(DateTime.parse(event.registrationDate))) {
       status = 'Đã Bỏ lỡ';
       statusColor = Colors.red;
@@ -244,7 +246,13 @@ class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
       statusColor = Colors.yellow;
       statusIcon = Icons.pending;
     }
-
+    final DateFormat formatter = DateFormat('dd/MM/yyyy HH:mm');
+    final String formattedCheckInTime = event.checkInTime != null
+        ? formatter.format(DateTime.parse(event.checkInTime!))
+        : 'Chưa điểm danh';
+    final String formattedCheckOutTime = event.checkOutTime != null
+        ? formatter.format(DateTime.parse(event.checkOutTime!))
+        : 'Chưa điểm danh';
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
       decoration: BoxDecoration(
@@ -263,7 +271,7 @@ class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
         leading: Icon(
           statusIcon,
           color: statusColor,
-          size: 50,
+          size: 35,
         ),
         title: Text(
           event.name ?? 'Loading ....',
@@ -295,7 +303,7 @@ class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              'Giờ vào:  ${event.checkInTime ?? 'Chưa điểm danh'}',
+              'Giờ vào:  $formattedCheckInTime',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
             const SizedBox(height: 5),
@@ -317,7 +325,7 @@ class CheckInOutStatusScreenState extends State<CheckInOutStatusScreen> {
             ),
             const SizedBox(height: 5),
             Text(
-              'Giờ ra:  ${event.checkOutTime ?? 'Chưa điểm danh'}',
+              'Giờ ra:  $formattedCheckOutTime',
               style: const TextStyle(fontSize: 14, color: Colors.black87),
             ),
           ],
